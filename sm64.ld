@@ -180,6 +180,9 @@ SECTIONS
       lib/PR/hvqm/hvqm2sp1.o(.rodata*);
    }
    END_SEG(main)
+   #ifndef PRELIMINARY
+      ASSERT((_mainSegmentRomEnd <= 0x101000), "Error: Please shrink your main segment to under 1MB.")
+   #endif
    BEGIN_NOLOAD(main)
    {
       BUILD_DIR/src/boot*.o(.*bss*);
@@ -200,8 +203,6 @@ SECTIONS
       . = ALIGN(0x8);
    }
    END_NOLOAD(main)
-
-   /*ASSERT((. <= SEG_ENGINE), "Error: main segment extended into engine.")*/
 
    . = _mainSegmentBssEnd;
 
@@ -231,8 +232,6 @@ SECTIONS
    }
    END_NOLOAD(engine)
 
-   /*ASSERT((. <= SEG_FRAMEBUFFERS), "Error: engine segment extended into framebuffers.")*/
-
    . = _engineSegmentBssEnd;
    BEGIN_NOLOAD(framebuffers)
    {
@@ -244,7 +243,9 @@ SECTIONS
    __mainPoolSize = RAM_END - .;
 
    __expansionRamStart = 0x80400000;
-   ASSERT((. <= __expansionRamStart), "Error: RDRAM expanded into Expansion RAM, despite Expansion RAM not being defined.")
+      #ifndef PRELIMINARY
+         ASSERT((. <= __expansionRamStart), "Error: RDRAM expanded into Expansion RAM, despite Expansion RAM not being defined.")
+      #endif
 
    BEGIN_SEG(entry, 0x10000000)
    {
@@ -294,14 +295,17 @@ SECTIONS
    END_SEG(behavior)
 
    /* 0x8016F000 21D7D0-255EC0 [386F0] */
-   BEGIN_SEG(goddard, SEG_GODDARD)
+#ifdef PRELIMINARY
+   BEGIN_SEG(goddard, RAM_END - GODDARD_SIZE)
+#else
+   BEGIN_SEG(goddard, 0x80345678)
+#endif
    {
       BUILD_DIR/src/menu*.o(.text);
       BUILD_DIR/src/menu*.o(.data*);
       BUILD_DIR/src/menu*.o(.rodata*);
-#ifdef GODDARD
+   #ifdef GODDARD
       BUILD_DIR/libgoddard.a:*.o(.text);
-      /* goddard subsystem data */
       BUILD_DIR/libgoddard.a:gd_main.o(.data*);
       BUILD_DIR/libgoddard.a:draw_objects.o(.data*);
       BUILD_DIR/libgoddard.a:objects.o(.data*);
@@ -311,7 +315,6 @@ SECTIONS
       BUILD_DIR/libgoddard.a:joints.o(.data*);
       BUILD_DIR/libgoddard.a:shape_helper.o(.data*);
       BUILD_DIR/libgoddard.a:renderer.o(.data*);
-      /* goddard subsystem rodata */
       BUILD_DIR/libgoddard.a:gd_main.o(.rodata*);
       BUILD_DIR/libgoddard.a:gd_memory.o(.rodata*);
       BUILD_DIR/libgoddard.a:draw_objects.o(.rodata*);
@@ -326,19 +329,26 @@ SECTIONS
       BUILD_DIR/libgoddard.a:gd_math.o(.rodata*);
       BUILD_DIR/libgoddard.a:shape_helper.o(.rodata*);
       BUILD_DIR/libgoddard.a:renderer.o(.rodata*);
-#endif
+   #endif
+      . = ALIGN(16);
    }
    END_SEG(goddard)
    BEGIN_NOLOAD(goddard)
    {
       BUILD_DIR/src/menu*.o(.bss*);
-#ifdef GODDARD
+   #ifdef GODDARD
       BUILD_DIR/libgoddard.a:*.o(.bss*);
-#endif
+   #endif
+      . = ALIGN(16);
    }
    END_NOLOAD(goddard)
 
-   ASSERT((. <= (SEG_POOL_START + POOL_SIZE)), "Error: extended past pool end.")
+   #ifndef PRELIMINARY
+      ASSERT((. <= (SEG_POOL_START + POOL_SIZE)), "Error: extended past pool end.")
+   #endif
+   #ifdef PRELIMINARY
+      GODDARD_SIZE = SIZEOF(.goddard) + SIZEOF(.goddard.noload);
+   #endif
 
    /* 0x268020 0x268020-0 [0] */
    BEGIN_SEG(intro, 0x14000000)
