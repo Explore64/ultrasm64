@@ -6,6 +6,7 @@
 
 #include "common1.h"
 #include "group17.h"
+#include "game/farcall_helpers.h"
 
 #include "mr_i_eyeball/geo.inc.c"
 #include "mr_i_iris/geo.inc.c"
@@ -13,3 +14,9 @@
 #include "snufit/geo.inc.c"
 #include "dorrie/geo.inc.c"
 #include "scuttlebug/geo.inc.c"
+
+#include "game/behaviors/mr_i.inc.c"
+#include "game/behaviors/swoop.inc.c"
+#include "game/behaviors/snufit.inc.c"
+#include "game/behaviors/dorrie.inc.c"
+#include "game/behaviors/scuttlebug.inc.c" // :scuttleeyes:

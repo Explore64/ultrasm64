@@ -14,6 +14,7 @@
 #include "shape_helper.h"
 #include "draw_objects.h"
 #include "game/game_init.h"
+#include "engine/math_util.h"
 
 /**
  * @file draw_objects.c
@@ -628,7 +629,7 @@ void draw_bone(struct GdObj *obj) {
     // dead code
     scale.x = 1.0f;
     scale.y = 1.0f;
-    scale.z = bone->unkF8 / 50.0f;
+    scale.z = bone->unkF8 / sqr(50.0f);
 
     if (bone->header.drawFlags & OBJ_HIGHLIGHTED) {
         colour = COLOUR_YELLOW;
@@ -743,7 +744,7 @@ void Proc8017A980(struct ObjLight *light) {
         sp1C = 1.0 - light->unk38 / 90.0f;
         if (sp20 > sp1C) {
             sp20 = (sp20 - sp1C) * (1.0 / (1.0 - sp1C));
-            if (sp20 > 1.0) {
+            if (sp20 > 1.0f) {
                 sp20 = 1.0f;
             } else if (sp20 < 0.0f) {
                 sp20 = 0.0f;

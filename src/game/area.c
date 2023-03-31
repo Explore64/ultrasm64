@@ -25,7 +25,7 @@
 
 struct SpawnInfo gPlayerSpawnInfos[1];
 struct GraphNode *D_8033A160[0x100];
-struct Area gAreaData[4];
+struct Area gAreaData[8];
 
 struct WarpTransition gWarpTransition;
 
@@ -181,7 +181,7 @@ void clear_areas(void) {
     gWarpTransition.pauseRendering = FALSE;
     gMarioSpawnInfo->areaIndex = -1;
 
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 8; i++) {
         gAreaData[i].index = i;
         gAreaData[i].flags = 0;
         gAreaData[i].terrainType = 0;

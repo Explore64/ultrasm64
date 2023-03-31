@@ -1,5 +1,11 @@
 // exclamation_box.inc.c
 
+static s32 sCapSaveFlags[] = {
+    SAVE_FLAG_HAVE_WING_CAP,
+    SAVE_FLAG_HAVE_METAL_CAP,
+    SAVE_FLAG_HAVE_VANISH_CAP,
+};
+
 struct ObjectHitbox sExclamationBoxHitbox = {
     /* interactType:      */ INTERACT_BREAKABLE,
     /* downOffset:        */ 5,

@@ -6,7 +6,12 @@
 
 #include "common1.h"
 #include "group5.h"
+#include "game/farcall_helpers.h"
 
 #include "klepto/geo.inc.c"
 #include "eyerok/geo.inc.c"
 #include "pokey/geo.inc.c"
+
+#include "game/behaviors/klepto.inc.c"
+#include "game/behaviors/eyerok.inc.c"
+#include "game/behaviors/pokey.inc.c"

@@ -20,6 +20,7 @@
 #include "shape_helper.h"
 #include "skin.h"
 #include "game/game_init.h"
+#include "engine/math_util.h"
 
 // data
 struct ObjGroup *gMarioFaceGrp = NULL;     // @ 801A82E0; returned by load_dynlist
@@ -464,10 +465,9 @@ void Unknown80198444(struct ObjVertex *vtx) {
     distance = vtx->pos.x * vtx->pos.x + vtx->pos.y * vtx->pos.y + vtx->pos.z * vtx->pos.z;
 
     if (distance != 0.0f) {
-        distance = sqrtf(distance); // sqrtd?
 
-        if (distance > D_801A8668) {
-            D_801A8668 = distance;
+        if (distance > sqr(D_801A8668)) {
+            D_801A8668 = sqrtf(distance);
         }
     }
 }
@@ -493,9 +493,9 @@ void Unknown801985E8(struct ObjShape *shape) {
 
     get_some_bounding_box(&bbox);
 
-    sShapeCenter.x = (f32)((bbox.minX + bbox.maxX) / 2.0); //? 2.0f
-    sShapeCenter.y = (f32)((bbox.minY + bbox.maxY) / 2.0); //? 2.0f
-    sShapeCenter.z = (f32)((bbox.minZ + bbox.maxZ) / 2.0); //? 2.0f
+    sShapeCenter.x = (f32)((bbox.minX + bbox.maxX) / 2.0f); //? 2.0f
+    sShapeCenter.y = (f32)((bbox.minY + bbox.maxY) / 2.0f); //? 2.0f
+    sShapeCenter.z = (f32)((bbox.minZ + bbox.maxZ) / 2.0f); //? 2.0f
 
     apply_to_obj_types_in_group(OBJ_TYPE_VERTICES, (applyproc_t) Unknown80198524, shape->vtxGroup);
 }

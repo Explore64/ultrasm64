@@ -3176,7 +3176,7 @@ u8 sTitleString2[] = {TEXT_OPTION_TIP};
 u8 sTitleString3[] = {TEXT_OPTION_TIP2};
 
 s8 gOptionsSelection = 1;
-extern u8 gAntiAliasing;
+extern s8 gAntiAliasing;
 extern u8 gScreenMode;
 extern u8 gFrameCap;
 extern u8 gDedither;
@@ -3195,8 +3195,8 @@ void render_options_page(void) {
     x = get_str_x_pos_from_center(gScreenWidth / 2, sTitleString, 12.0f);
     print_generic_string(x, 240 - 120, sTitleString);
 
-    x = get_str_x_pos_from_center(gScreenWidth / 2, sOptionStrings[0 + gAntiAliasing], 12.0f);
-    print_generic_string(x, 240 - 144, sOptionStrings[0 + gAntiAliasing]);
+    x = get_str_x_pos_from_center(gScreenWidth / 2, sOptionStrings[0 + gAntiAliasing + 1], 12.0f);
+    print_generic_string(x, 240 - 144, sOptionStrings[0 + gAntiAliasing + 1]);
     x = get_str_x_pos_from_center(gScreenWidth / 2, sOptionStrings[3 + gScreenMode], 12.0f);
     print_generic_string(x, 240 - 160, sOptionStrings[3 + gScreenMode]);
     x = get_str_x_pos_from_center(gScreenWidth / 2, sOptionStrings[8 + gDedither], 12.0f);
@@ -3241,10 +3241,10 @@ s32 options_page_logic(void) {
         switch(gOptionsSelection) {
         case 1:
             gAntiAliasing += settingSwap;
-            if (gAntiAliasing == 255 && settingSwap == -1) {
-                gAntiAliasing = 2;
-            } else if (gAntiAliasing == 3) {
-                gAntiAliasing = 0;
+            if (gAntiAliasing == -2 && settingSwap == -1) {
+                gAntiAliasing = 1;
+            } else if (gAntiAliasing == 2) {
+                gAntiAliasing = -1;
             }
             break;
         case 2:

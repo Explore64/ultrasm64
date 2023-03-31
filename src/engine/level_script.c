@@ -87,7 +87,7 @@ static s32 eval_script_op(s8 op, s32 arg) {
 
 static void level_cmd_load_and_execute(void) {
     main_pool_push_state();
-    load_segment(CMD_GET(s16, 2), CMD_GET(void *, 4), CMD_GET(void *, 8), MEMORY_POOL_LEFT);
+    load_segment(CMD_GET(s16, 2), CMD_GET(void *, 4), CMD_GET(void *, 8), MEMORY_POOL_LEFT, CMD_GET(void *, 16), CMD_GET(void *, 20));
 
     *sStackTop++ = (uintptr_t) NEXT_CMD;
     *sStackTop++ = (uintptr_t) sStackBase;
@@ -102,8 +102,7 @@ static void level_cmd_exit_and_execute(void) {
     main_pool_pop_state();
     main_pool_push_state();
 
-    load_segment(CMD_GET(s16, 2), CMD_GET(void *, 4), CMD_GET(void *, 8),
-            MEMORY_POOL_LEFT);
+    load_segment(CMD_GET(s16, 2), CMD_GET(void *, 4), CMD_GET(void *, 8), MEMORY_POOL_LEFT, CMD_GET(void *, 16), CMD_GET(void *, 20));
 
     sStackTop = sStackBase;
     sCurrentCmd = segmented_to_virtual(targetAddr);
@@ -267,8 +266,7 @@ static void level_cmd_load_to_fixed_address(void) {
 }
 
 static void level_cmd_load_raw(void) {
-    load_segment(CMD_GET(s16, 2), CMD_GET(void *, 4), CMD_GET(void *, 8),
-            MEMORY_POOL_LEFT);
+    load_segment(CMD_GET(s16, 2), CMD_GET(void *, 4), CMD_GET(void *, 8), MEMORY_POOL_LEFT, CMD_GET(void *, 12), CMD_GET(void *, 16));
     sCurrentCmd = CMD_NEXT;
 }
 
@@ -306,6 +304,29 @@ static void level_cmd_init_level(void) {
     sCurrentCmd = CMD_NEXT;
 }
 
+extern s32 gTlbEntries;
+extern u8  gTlbSegments[32];
+
+// This clears all the temporary bank TLB maps. group0, common1 and behavourdata are always loaded,
+// and they're also loaded first, so that means we just leave the first 3 indexes mapped.
+void unmap_tlbs(void) {
+    s32 i;
+    for (i = 0; i < 32; i++) {
+        if (gTlbSegments[i]) {
+            if (i != 0x16 && i != 0x17 && i != 0x13) {
+                while (gTlbSegments[i] > 0) {
+                    osUnmapTLB(gTlbEntries);
+                    gTlbSegments[i]--;
+                    gTlbEntries--;
+                }
+            } else {
+                //gTlbEntries -= gTlbSegments[i];
+                //gTlbSegments[i] = 0;
+            }
+        }
+    }
+}
+
 static void level_cmd_clear_level(void) {
     clear_objects();
     clear_area_graph_nodes();
@@ -313,6 +334,7 @@ static void level_cmd_clear_level(void) {
     main_pool_pop_state();
     // the game does a push on level load and a pop on level unload, we need to add another push to store state after the level has been loaded, so one more pop is needed
     main_pool_pop_state();
+    unmap_tlbs();
 
     sCurrentCmd = CMD_NEXT;
 }
@@ -331,7 +353,7 @@ static void level_cmd_free_level_pool(void) {
     alloc_only_pool_resize(sLevelPool, sLevelPool->usedSpace);
     sLevelPool = NULL;
 
-    for (s32 i = 0; i < 4; i++) {
+    for (s32 i = 0; i < 8; i++) {
         if (gAreaData[i].terrainData != NULL) {
             alloc_surface_pools();
             break;

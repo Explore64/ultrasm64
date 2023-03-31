@@ -19,6 +19,7 @@
 #include "skin.h"
 #include "skin_movement.h"
 #include "game/game_init.h"
+#include "engine/math_util.h"
 
 // data
 static s32 D_801A82D0 = 0;
@@ -85,8 +86,8 @@ void grabbable_joint_update_func(struct ObjJoint *self) {
 
             // If the joint's velocity has decayed enough and it is very close
             // to its original position, stop its movement altogether
-            if (ABS(self->velocity.x) + ABS(self->velocity.y) + ABS(self->velocity.z) < 1.0) {
-                if (ABS(offset.x) + ABS(offset.y) + ABS(offset.z) < 1.0) {
+            if (ABS(self->velocity.x) + ABS(self->velocity.y) + ABS(self->velocity.z) < 1.0f) {
+                if (ABS(offset.x) + ABS(offset.y) + ABS(offset.z) < 1.0f) {
                     self->velocity.x = self->velocity.y = self->velocity.z = 0.0f;
                     self->mat128[3][0] -= offset.x;
                     self->mat128[3][1] -= offset.y;
@@ -338,7 +339,7 @@ void func_8018F520(struct ObjBone *b) {
     b->unk64.y = sp90.y;
     b->unk64.z = sp90.z;
 
-    sp68 = 5.4 / b->unkF8; //? 5.4f
+    sp68 = sqr(5.4f) / b->unkF8; //? 5.4f
     sp6C.x *= sp68;
     sp6C.y *= sp68;
     sp6C.z *= sp68;
@@ -432,9 +433,7 @@ void func_8018FB58(struct ObjBone *b) {
     vec.y = j1->worldPos.y - j2->worldPos.y;
     vec.z = j1->worldPos.z - j2->worldPos.z;
 
-    b->unkF8 = sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
-    b->unkF4 = b->unkF8;
-    b->unkFC = b->unkF8;
+    b->unkF8 = ((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
     func_8018F328(b);
 }
 
@@ -478,7 +477,7 @@ struct ObjBone *make_bone(s32 a0, struct ObjJoint *j1, struct ObjJoint *j2, UNUS
     gd_set_identity_mat4(&b->mat70);
     b->spring = 0.8f;
     b->unk114 = 0.9f;
-    b->unkF8 = 100.0f;
+    b->unkF8 = sqr(100.0f);
 
     if (j1 != NULL && j2 != NULL) {
         add_joint2bone(b, j1);
@@ -551,7 +550,7 @@ void func_80190168(struct ObjBone *b, UNUSED struct ObjJoint *a1, UNUSED struct 
         if (sp58 == 0.0f) {
             sp58 = 1.0f;
         }
-        sp60 = (b->unkF8 / sp58) * b->spring;
+        sp60 = (b->unkF8 / sqr(sp58)) * b->spring;
     }
 
     if (b->unk104 & 0x4) {

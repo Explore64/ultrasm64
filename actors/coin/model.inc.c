@@ -63,8 +63,8 @@ const Gfx coin_seg3_dl_030077D0[] = {
     gsSP2Triangles( 0,  1,  2, 0x0,  0,  2,  3, 0x0),
     gsSPTexture(0x0001, 0x0001, 0, G_TX_RENDERTILE, G_OFF),
     gsSPSetGeometryMode(G_LIGHTING),
-    gsDPPipeSync(),
     gsDPSetPrimColor(0, 0, 255, 255, 255, 255),
+    gsDPPipeSync(),
     gsDPSetCombineMode(G_CC_SHADE, G_CC_PASS2),
     gsSPEndDisplayList(),
 };

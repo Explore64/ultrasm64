@@ -28,10 +28,10 @@ Note that RECT commands must be enhanced to support negative coordinates with th
 #else
 
 #define GFX_DIMENSIONS_FROM_LEFT_EDGE(v) (v)
-#define GFX_DIMENSIONS_FROM_RIGHT_EDGE(v) (SCREEN_WIDTH - (v))
+#define GFX_DIMENSIONS_FROM_RIGHT_EDGE(v) (gScreenWidth - (v))
 #define GFX_DIMENSIONS_RECT_FROM_LEFT_EDGE(v) (v)
-#define GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(v) (SCREEN_WIDTH - (v))
-#define GFX_DIMENSIONS_ASPECT_RATIO (4.0f / 3.0f)
+#define GFX_DIMENSIONS_RECT_FROM_RIGHT_EDGE(v) (gScreenWidth - (v))
+#define GFX_DIMENSIONS_ASPECT_RATIO (gScreenWidth / SCREEN_HEIGHT)
 
 #endif
 

@@ -1,17 +1,5 @@
 // snowman.inc.c
 
-static struct ObjectHitbox sRollingSphereHitbox = {
-    /* interactType:      */ INTERACT_DAMAGE,
-    /* downOffset:        */ 0,
-    /* damageOrCoinValue: */ 3,
-    /* health:            */ 0,
-    /* numLootCoins:      */ 0,
-    /* radius:            */ 210,
-    /* height:            */ 350,
-    /* hurtboxRadius:     */ 0,
-    /* hurtboxHeight:     */ 0,
-};
-
 void bhv_snowmans_bottom_init(void) {
     struct Object *snowmansHead;
 
@@ -32,23 +20,6 @@ void bhv_snowmans_bottom_init(void) {
         o->parentObj = snowmansHead;
     }
     spawn_object_abs_with_rot(o, 0, MODEL_NONE, bhvSnowmansBodyCheckpoint, -402, 461, -2898, 0, 0, 0);
-}
-
-void set_rolling_sphere_hitbox(void) {
-    obj_set_hitbox(o, &sRollingSphereHitbox);
-
-    if (o->oInteractStatus & INT_STATUS_INTERACTED) {
-        o->oInteractStatus = 0;
-    }
-}
-
-void adjust_rolling_face_pitch(f32 f12) {
-    o->oFaceAnglePitch += (s16)(o->oForwardVel * (100.0f / f12));
-    o->oSnowmansBottomScale += o->oForwardVel * 0.0001;
-
-    if (o->oSnowmansBottomScale > 1.0) {
-        o->oSnowmansBottomScale = 1.0f;
-    }
 }
 
 void snowmans_bottom_act_1(void) {

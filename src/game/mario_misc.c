@@ -566,11 +566,29 @@ Gfx *geo_switch_mario_hand_grab_pos(s32 callContext, struct GraphNode *b, Mat4 *
             }
         }
     } else if (callContext == GEO_CONTEXT_HELD_OBJ) {
-        // ! The HOLP is set here, which is why it only updates when the held object is drawn.
-        // This is why it won't update during a pause buffered hitstun or when the camera is very far
-        // away.
-        get_pos_from_transform_mtx(marioState->marioBodyState->heldObjLastPosition, *curTransform,
-                                   *gCurGraphNodeCamera->matrixPtr);
+        float translation[3];
+        vec3f_copy(translation, (*curTransform)[3]);
+        translation[1] += asHeldObj->translation[1] + marioState->heldObj->oGraphYOffset;
+        translation[0] += asHeldObj->translation[0] * sins(marioState->faceAngle[1]) + asHeldObj->translation[2] * sins(marioState->faceAngle[1] + 0x4000);
+        translation[2] += asHeldObj->translation[0] * coss(marioState->faceAngle[1]) + asHeldObj->translation[2] * coss(marioState->faceAngle[1] + 0x4000);
+
+        marioState->heldObj->oFaceAnglePitch = -marioState->faceAngle[0];
+        marioState->heldObj->oFaceAngleYaw = marioState->faceAngle[1];
+        marioState->heldObj->oFaceAngleRoll = 0;
+
+        marioState->heldObj->oFloorHeight = marioState->floorHeight;
+        marioState->heldObj->oFloor = marioState->floor;
+        for (u32 i = 0; i < 3; i++) {
+            marioState->marioBodyState->heldObjLastPosition[i] = translation[i];
+
+            marioState->heldObj->header.gfx.pos[i] = translation[i];
+            marioState->heldObj->header.gfx.posLerp[i] = translation[i];
+            marioState->heldObj->OBJECT_FIELD_F32(O_POS_INDEX + i) = translation[i];
+                
+            marioState->heldObj->header.gfx.angle[i] = marioState->heldObj->OBJECT_FIELD_S16(O_MOVE_ANGLE_INDEX + 1, i + 1);
+            marioState->heldObj->header.gfx.angleLerp[i] = marioState->heldObj->OBJECT_FIELD_S16(O_MOVE_ANGLE_INDEX + 1, i + 1);
+            marioState->heldObj->OBJECT_FIELD_S16(O_MOVE_ANGLE_INDEX, i) = marioState->heldObj->OBJECT_FIELD_S16(O_MOVE_ANGLE_INDEX + 1, i + 1);
+        }
     }
     return NULL;
 }

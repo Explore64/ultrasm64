@@ -71,6 +71,7 @@ s32 intro_lakitu_set_pos_and_focus(struct Object *obj, struct CutsceneSplinePoin
 
 void bhv_intro_lakitu_loop(void) {
     Vec3f sp64, sp58, sp4C;
+    o->header.gfx.node.flags |= GRAPH_RENDER_PRIORITY;
 
     switch (o->oAction) {
         case 0:
@@ -78,8 +79,9 @@ void bhv_intro_lakitu_loop(void) {
 
             o->oIntroLakituSplineSegment = 0.0f;
             o->oIntroLakituSplineSegmentProgress = 0.0f;
-            o->oIntroLakituCloud =
-                spawn_object_relative_with_scale(1, 0, 0, 0, 2.0f, o, MODEL_MIST, bhvCloud);
+            o->oIntroLakituCloud = spawn_object_relative_with_scale(1, 0, 0, 0, 2.0f, o, MODEL_MIST, bhvCloud);
+            o->oIntroLakituCloud->header.gfx.node.flags |= GRAPH_RENDER_PRIORITY;
+
 
             if (gCamera->cutscene == CUTSCENE_END_WAVING) {
                 o->oAction = 100;

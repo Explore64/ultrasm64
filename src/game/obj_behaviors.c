@@ -41,22 +41,16 @@
 
 #define o gCurrentObject
 
-#define OBJ_COL_FLAG_GROUNDED   (1 << 0)
-#define OBJ_COL_FLAG_HIT_WALL   (1 << 1)
-#define OBJ_COL_FLAG_UNDERWATER (1 << 2)
-#define OBJ_COL_FLAG_NO_Y_VEL   (1 << 3)
-#define OBJ_COL_FLAGS_LANDED    (OBJ_COL_FLAG_GROUNDED | OBJ_COL_FLAG_NO_Y_VEL)
-
 /**
  * Current object floor as defined in object_step.
  */
-static struct Surface *sObjFloor;
+struct Surface *sObjFloor;
 
 /**
  * Set to false when an object close to the floor should not be oriented in reference
  * to it. Happens with boulder, falling pillar, and the rolling snowman body.
  */
-static s8 sOrientObjWithFloor = TRUE;
+s8 sOrientObjWithFloor = TRUE;
 
 /**
  * Keeps track of Mario's previous non-zero room.
@@ -184,9 +178,6 @@ void obj_orient_graph(struct Object *obj, f32 normalX, f32 normalY, f32 normalZ)
         return;
     }
 
-    if (gThrowMatIndex >= THROWMATSTACK)
-        return;
-
     objVisualPosition[0] = obj->oPosX;
     objVisualPosition[1] = obj->oPosY + obj->oGraphYOffset;
     objVisualPosition[2] = obj->oPosZ;
@@ -196,9 +187,11 @@ void obj_orient_graph(struct Object *obj, f32 normalX, f32 normalY, f32 normalZ)
     surfaceNormals[2] = normalZ;
 
     mtxf_align_terrain_normal(*throwMatrix, surfaceNormals, objVisualPosition, obj->oFaceAngleYaw);
-    // obj->header.gfx.throwMatrix = (void *) throwMatrix;
+    obj->header.gfx.throwMatrix = (void *) throwMatrix;
+    
+    if (gThrowMatIndex >= THROWMATSTACK)
+        return;
     obj->header.gfx.matrixID[gThrowMatSwap] = gThrowMatIndex;
-
     gThrowMatIndex++;
 }
 
@@ -206,7 +199,7 @@ void obj_orient_graph(struct Object *obj, f32 normalX, f32 normalY, f32 normalZ)
  * Determines an object's forward speed multiplier.
  */
 void calc_obj_friction(f32 *objFriction, f32 floor_nY) {
-    if (floor_nY < 0.2 && o->oFriction < 0.9999) {
+    if (floor_nY < 0.2f && o->oFriction < 0.9999f) {
         *objFriction = 0;
     } else {
         *objFriction = o->oFriction;
@@ -224,10 +217,10 @@ void calc_new_obj_vel_and_pos_y(struct Surface *objFloor, f32 objFloorY, f32 obj
 
     // Caps vertical speed with a "terminal velocity".
     o->oVelY -= o->oGravity;
-    if (o->oVelY > 75.0) {
+    if (o->oVelY > 75.0f) {
         o->oVelY = 75.0f;
     }
-    if (o->oVelY < -75.0) {
+    if (o->oVelY < -75.0f) {
         o->oVelY = -75.0f;
     }
 
@@ -238,7 +231,7 @@ void calc_new_obj_vel_and_pos_y(struct Surface *objFloor, f32 objFloorY, f32 obj
         o->oPosY = objFloorY;
 
         // Bounces an object if the ground is hit fast enough.
-        if (o->oVelY < -17.5) {
+        if (o->oVelY < -17.5f) {
             o->oVelY = -(o->oVelY / 2);
         } else {
             o->oVelY = 0;
@@ -257,10 +250,10 @@ void calc_new_obj_vel_and_pos_y(struct Surface *objFloor, f32 objFloorY, f32 obj
                    / (floor_nX * floor_nX + floor_nY * floor_nY + floor_nZ * floor_nZ) * o->oGravity
                    * 2;
 
-        if (objVelX < 0.000001 && objVelX > -0.000001) {
+        if (objVelX < 0.000001f && objVelX > -0.000001f) {
             objVelX = 0;
         }
-        if (objVelZ < 0.000001 && objVelZ > -0.000001) {
+        if (objVelZ < 0.000001f && objVelZ > -0.000001f) {
             objVelZ = 0;
         }
 
@@ -283,7 +276,7 @@ void calc_new_obj_vel_and_pos_y_underwater(struct Surface *objFloor, f32 floorY,
     o->oVelY -= netYAccel;
 
     // Caps vertical speed with a "terminal velocity".
-    if (o->oVelY > 75.0) {
+    if (o->oVelY > 75.0f) {
         o->oVelY = 75.0f;
     }
     if (o->oVelY < -75.0) {
@@ -297,7 +290,7 @@ void calc_new_obj_vel_and_pos_y_underwater(struct Surface *objFloor, f32 floorY,
         o->oPosY = floorY;
 
         // Bounces an object if the ground is hit fast enough.
-        if (o->oVelY < -17.5) {
+        if (o->oVelY < -17.5f) {
             o->oVelY = -(o->oVelY / 2);
         } else {
             o->oVelY = 0;
@@ -319,14 +312,14 @@ void calc_new_obj_vel_and_pos_y_underwater(struct Surface *objFloor, f32 floorY,
                    / (floor_nX * floor_nX + floor_nY * floor_nY + floor_nZ * floor_nZ) * netYAccel * 2;
     }
 
-    if (objVelX < 0.000001 && objVelX > -0.000001) {
+    if (objVelX < 0.000001f && objVelX > -0.000001f) {
         objVelX = 0;
     }
-    if (objVelZ < 0.000001 && objVelZ > -0.000001) {
+    if (objVelZ < 0.000001f && objVelZ > -0.000001f) {
         objVelZ = 0;
     }
 
-    if (o->oVelY < 0.000001 && o->oVelY > -0.000001) {
+    if (o->oVelY < 0.000001f && o->oVelY > -0.000001f) {
         o->oVelY = 0;
     }
 
@@ -550,6 +543,35 @@ s8 obj_check_if_facing_toward_angle(u32 base, u32 goal, s16 range) {
     return FALSE;
 }
 
+static struct ObjectHitbox sRollingSphereHitbox = {
+    /* interactType:      */ INTERACT_DAMAGE,
+    /* downOffset:        */ 0,
+    /* damageOrCoinValue: */ 3,
+    /* health:            */ 0,
+    /* numLootCoins:      */ 0,
+    /* radius:            */ 210,
+    /* height:            */ 350,
+    /* hurtboxRadius:     */ 0,
+    /* hurtboxHeight:     */ 0,
+};
+
+void adjust_rolling_face_pitch(f32 f12) {
+    o->oFaceAnglePitch += (s16)(o->oForwardVel * (100.0f / f12));
+    o->oSnowmansBottomScale += o->oForwardVel * 0.0001;
+
+    if (o->oSnowmansBottomScale > 1.0) {
+        o->oSnowmansBottomScale = 1.0f;
+    }
+}
+
+void set_rolling_sphere_hitbox(void) {
+    obj_set_hitbox(o, &sRollingSphereHitbox);
+
+    if (o->oInteractStatus & INT_STATUS_INTERACTED) {
+        o->oInteractStatus = 0;
+    }
+}
+
 /**
  * Finds any wall collisions and returns what the displacement vector would be.
  */
@@ -724,58 +746,3 @@ void spawn_orange_number(s8 behParam, s16 relX, s16 relY, s16 relZ) {
     orangeNumber = spawn_object_relative(behParam, relX, relY, relZ, o, MODEL_NUMBER, bhvOrangeNumber);
     orangeNumber->oPosY += 25.0f;
 }
-
-#include "behaviors/moving_coin.inc.c"
-#include "behaviors/seaweed.inc.c"
-#include "behaviors/bobomb.inc.c"
-#include "behaviors/cannon_door.inc.c"
-#include "behaviors/whirlpool.inc.c"
-#include "behaviors/amp.inc.c"
-#include "behaviors/butterfly.inc.c"
-#include "behaviors/hoot.inc.c"
-#include "behaviors/bubble.inc.c"
-#include "behaviors/water_wave.inc.c"
-#include "behaviors/explosion.inc.c"
-#include "behaviors/corkbox.inc.c"
-#include "behaviors/bully.inc.c"
-#include "behaviors/water_ring.inc.c"
-#include "behaviors/bowser_bomb.inc.c"
-#include "behaviors/celebration_star.inc.c"
-#include "behaviors/drawbridge.inc.c"
-#include "behaviors/bomp.inc.c"
-#include "behaviors/sliding_platform.inc.c"
-#include "behaviors/moneybag.inc.c"
-#include "behaviors/bowling_ball.inc.c"
-#include "behaviors/cruiser.inc.c"
-#include "behaviors/spindel.inc.c"
-#include "behaviors/pyramid_wall.inc.c"
-#include "behaviors/pyramid_elevator.inc.c"
-#include "behaviors/pyramid_top.inc.c"
-#include "behaviors/sound_waterfall.inc.c"
-#include "behaviors/sound_volcano.inc.c"
-#include "behaviors/castle_flag.inc.c"
-#include "behaviors/sound_birds.inc.c"
-#include "behaviors/sound_ambient.inc.c"
-#include "behaviors/sound_sand.inc.c"
-#include "behaviors/castle_cannon_grate.inc.c"
-#include "behaviors/snowman.inc.c"
-#include "behaviors/boulder.inc.c"
-#include "behaviors/cap.inc.c"
-#include "behaviors/spawn_star.inc.c"
-#include "behaviors/red_coin.inc.c"
-#include "behaviors/hidden_star.inc.c"
-#include "behaviors/rolling_log.inc.c"
-#include "behaviors/mushroom_1up.inc.c"
-#include "behaviors/controllable_platform.inc.c"
-#include "behaviors/breakable_box_small.inc.c"
-#include "behaviors/snow_mound.inc.c"
-#include "behaviors/floating_platform.inc.c"
-#include "behaviors/arrow_lift.inc.c"
-#include "behaviors/orange_number.inc.c"
-#include "behaviors/manta_ray.inc.c"
-#include "behaviors/falling_pillar.inc.c"
-#include "behaviors/floating_box.inc.c"
-#include "behaviors/decorative_pendulum.inc.c"
-#include "behaviors/treasure_chest.inc.c"
-#include "behaviors/mips.inc.c"
-#include "behaviors/yoshi.inc.c"

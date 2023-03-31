@@ -233,7 +233,7 @@ static struct Surface *find_ceil_from_list(struct SurfaceNode *surfaceNode, s32 
         surf = surfaceNode->surface;
         surfaceNode = surfaceNode->next;
 
-        if (y > surf->upperY + 20) {
+        if (y > surf->upperY + 200) {
             continue;
         }
 

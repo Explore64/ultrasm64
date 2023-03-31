@@ -6,6 +6,7 @@
 
 #include "common1.h"
 #include "group14.h"
+#include "game/farcall_helpers.h"
 
 #include "koopa_flag/geo.inc.c"
 #include "poundable_pole/geo.inc.c"
@@ -14,3 +15,8 @@
 #include "whomp/geo.inc.c"
 #include "chain_ball/geo.inc.c"
 #include "chain_chomp/geo.inc.c"
+
+#include "game/behaviors/piranha_bubbles.inc.c"
+#include "game/behaviors/piranha_plant.inc.c"
+#include "game/behaviors/whomp.inc.c"
+#include "game/behaviors/chain_chomp.inc.c" // TODO: chain_chomp_sub_act_lunge documentation

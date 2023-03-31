@@ -39,7 +39,7 @@ f32 gd_rand_float(void) {
     sPrimarySeed += 4;
 
     /* Seed Switch */
-    if ((sPrimarySeed ^= gd_get_ostime()) & 1) {
+    if ((sPrimarySeed ^= osGetCount()) & 1) {
         temp = sPrimarySeed;
         sPrimarySeed = sSecondarySeed;
         sSecondarySeed = temp;

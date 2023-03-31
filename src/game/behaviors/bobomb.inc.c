@@ -212,30 +212,6 @@ void bobomb_thrown_loop(void) {
     o->oAction = BOBOMB_ACT_LAUNCHED;
 }
 
-void curr_obj_random_blink(s32 *blinkTimer) {
-    if (*blinkTimer == 0) {
-        if ((s16)(random_float() * 100.0f) == 0) {
-            o->oAnimState = 1;
-            *blinkTimer = 1;
-        }
-    } else {
-        (*blinkTimer)++;
-
-        if (*blinkTimer > 5) {
-            o->oAnimState = 0;
-        }
-
-        if (*blinkTimer > 10) {
-            o->oAnimState = 1;
-        }
-
-        if (*blinkTimer > 15) {
-            o->oAnimState = 0;
-            *blinkTimer = 0;
-        }
-    }
-}
-
 void bhv_bobomb_loop(void) {
     s8 dustPeriodMinus1;
 

@@ -41,8 +41,8 @@ struct DynList dynlist_mario_eyebrow_right_shape[] = {
     StartGroup(DYNOBJ_MARIO_RIGHT_EYEBROW_MTL_GROUP),
         MakeDynObj(D_MATERIAL, 0),
             SetId(0),
-            SetAmbient(0.0, 0.005, 0.0),  // Why is green 0.005 on the right eyebrow, but 0.0 on the left eyebrow?
-            SetDiffuse(0.0, 0.0, 0.0),
+            SetAmbient(0.0, 0.005, 0.0f),  // Why is green 0.005 on the right eyebrow, but 0.0 on the left eyebrow?
+            SetDiffuse(0.0, 0.0, 0.0f),
     EndGroup(DYNOBJ_MARIO_RIGHT_EYEBROW_MTL_GROUP),
 
     MakeDynObj(D_SHAPE, DYNOBJ_MARIO_RIGHT_EYEBROW_SHAPE),
@@ -89,8 +89,8 @@ struct DynList dynlist_mario_eyebrow_left_shape[] = {
     StartGroup(DYNOBJ_MARIO_LEFT_EYEBROW_MTL_GROUP),
         MakeDynObj(D_MATERIAL, 0),
             SetId(0),
-            SetAmbient(0.0, 0.0, 0.0),
-            SetDiffuse(0.0, 0.0, 0.0),
+            SetAmbient(0.0, 0.0, 0.0f),
+            SetDiffuse(0.0, 0.0, 0.0f),
     EndGroup(DYNOBJ_MARIO_LEFT_EYEBROW_MTL_GROUP),
 
     MakeDynObj(D_SHAPE, DYNOBJ_MARIO_LEFT_EYEBROW_SHAPE),
@@ -157,8 +157,8 @@ struct DynList dynlist_mario_mustache_shape[] = {
     StartGroup(DYNOBJ_MARIO_MUSTACHE_MTL_GROUP),
         MakeDynObj(D_MATERIAL, 0),
             SetId(0),
-            SetAmbient(0.0, 0.0, 0.0),
-            SetDiffuse(0.0, 0.0, 0.0),
+            SetAmbient(0.0, 0.0, 0.0f),
+            SetDiffuse(0.0, 0.0, 0.0f),
     EndGroup(DYNOBJ_MARIO_MUSTACHE_MTL_GROUP),
 
     MakeDynObj(D_SHAPE, DYNOBJ_MARIO_MUSTACHE_SHAPE),

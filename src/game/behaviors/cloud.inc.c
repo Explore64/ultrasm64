@@ -8,7 +8,7 @@
  * If spawned by a lakitu, its parent will be the lakitu.
  * Processing order is lakitu -> cloud -> its cloud parts.
  */
-
+#include "game/rendering_graph_node.h"
 /**
  * The relative heights of each cloud part.
  */
@@ -24,6 +24,9 @@ static void cloud_act_spawn_parts(void) {
     // Spawn the pieces of the cloud itself
     for (i = 0; i < 5; i++) {
         cloudPart = spawn_object_relative(i, 0, 0, 0, o, MODEL_MIST, bhvCloudPart);
+        if (o->header.gfx.node.flags & GRAPH_RENDER_PRIORITY) {
+            cloudPart->header.gfx.node.flags |= GRAPH_RENDER_PRIORITY;
+        }
 
         if (cloudPart != NULL) {
             obj_set_billboard(cloudPart);

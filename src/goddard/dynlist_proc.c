@@ -562,7 +562,7 @@ struct GdObj *d_makeobj(enum DObjTypes type, DynObjName name) {
             dobj = &gd_make_vertex(0.0f, 0.0f, 0.0f)->header;
             break;
         case D_FACE:
-            dobj = &make_face_with_colour(1.0, 1.0, 1.0)->header;
+            dobj = &make_face_with_colour(1.0, 1.0, 1.0f)->header;
             break;
         case D_PLANE:
             dobj = &make_plane(FALSE, NULL)->header;
@@ -875,7 +875,7 @@ void chk_shapegen(struct ObjShape *shape) {
                 //! @bug Call to `make_face_with_colour()` compiles incorrectly
                 //!      due to Goddard only declaring the functions,
                 //!      not prototyping the functions
-                face = make_face_with_colour(1.0, 1.0, 1.0);
+                face = make_face_with_colour(1.0, 1.0, 1.0f);
                 face->mtlId = (s32) facedata->data[i][0];
                 add_3_vtx_to_face(face, vtxbuf[facedata->data[i][1]], vtxbuf[facedata->data[i][2]],
                                   vtxbuf[facedata->data[i][3]]);
@@ -2073,9 +2073,6 @@ void d_set_type(s32 type) {
         case OBJ_TYPE_GADGETS:
             ((struct ObjGadget *) dynobj)->type = type;
             break;
-        case OBJ_TYPE_GROUPS:
-            ((struct ObjGroup *) dynobj)->debugPrint = type;
-            break;
         case OBJ_TYPE_PARTICLES:
             ((struct ObjParticle *) dynobj)->unk60 = type;
             break;
@@ -2413,7 +2410,7 @@ void d_set_skin_weight(s32 vtxId, f32 percentWeight) {
     switch (sDynListCurObj->type) {
         case OBJ_TYPE_JOINTS:
             set_skin_weight((struct ObjJoint *) sDynListCurObj, vtxId, NULL,
-                            percentWeight / 100.0);
+                            percentWeight / 100.0f);
             break;
     }
 }

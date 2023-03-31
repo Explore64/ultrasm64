@@ -6,6 +6,12 @@
  * treadmills.
  */
 
+
+/**
+ * The treadmill that plays sounds and controls the others on random setting.
+ */
+struct Object *sMasterTreadmill;
+
 /**
  * Collision models for the different sized treadmills.
  */

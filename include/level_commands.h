@@ -4,6 +4,7 @@
 #include "command_macros_base.h"
 
 #include "level_table.h"
+#include "config.h"
 
 #define OP_AND   0
 #define OP_NAND  1
@@ -35,16 +36,36 @@
 #define DIZZY_FACE 0x0003
 
 #define EXECUTE(seg, script, scriptEnd, entry) \
-    CMD_BBH(0x00, 0x10, seg), \
+    CMD_BBH(0x00, 0x18, seg), \
     CMD_PTR(script), \
     CMD_PTR(scriptEnd), \
-    CMD_PTR(entry)
+    CMD_PTR(entry), \
+    CMD_PTR(NULL), \
+    CMD_PTR(NULL)
 
 #define EXIT_AND_EXECUTE(seg, script, scriptEnd, entry) \
-    CMD_BBH(0x01, 0x10, seg), \
+    CMD_BBH(0x01, 0x18, seg), \
     CMD_PTR(script), \
     CMD_PTR(scriptEnd), \
-    CMD_PTR(entry)
+    CMD_PTR(entry), \
+    CMD_PTR(NULL), \
+    CMD_PTR(NULL)
+
+#define EXECUTE_WITH_CODE(seg, script, scriptEnd, entry, bssStart, bssEnd) \
+    CMD_BBH(0x00, 0x18, seg), \
+    CMD_PTR(script), \
+    CMD_PTR(scriptEnd), \
+    CMD_PTR(entry), \
+    CMD_PTR(bssStart), \
+    CMD_PTR(bssEnd)
+
+#define EXIT_AND_EXECUTE_WITH_CODE(seg, script, scriptEnd, entry, bssStart, bssEnd) \
+    CMD_BBH(0x01, 0x18, seg), \
+    CMD_PTR(script), \
+    CMD_PTR(scriptEnd), \
+    CMD_PTR(entry), \
+    CMD_PTR(bssStart), \
+    CMD_PTR(bssEnd)
 
 #define EXIT() \
     CMD_BBH(0x02, 0x04, 0x0000)
@@ -128,9 +149,18 @@
     CMD_PTR(romEnd)
 
 #define LOAD_RAW(seg, romStart, romEnd) \
-    CMD_BBH(0x17, 0x0C, seg), \
+    CMD_BBH(0x17, 0x14, seg), \
     CMD_PTR(romStart), \
-    CMD_PTR(romEnd)
+    CMD_PTR(romEnd), \
+    CMD_PTR(0), \
+    CMD_PTR(0)
+
+#define LOAD_RAW_WITH_CODE(seg, romStart, romEnd, bssStart, bssEnd) \
+    CMD_BBH(0x17, 0x14, seg), \
+    CMD_PTR(romStart), \
+    CMD_PTR(romEnd), \
+    CMD_PTR(bssStart), \
+    CMD_PTR(bssEnd)
 
 #define LOAD_YAY0(seg, romStart, romEnd) \
     CMD_BBH(0x18, 0x0C, seg), \

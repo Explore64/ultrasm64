@@ -1423,6 +1423,7 @@ u32 interact_koopa_shell(struct MarioState *m, UNUSED u32 interactType, struct O
             m->interactObj = o;
             m->usedObj = o;
             m->riddenObj = o;
+            o->header.gfx.node.flags |= GRAPH_RENDER_PRIORITY;
 
             attack_object(o, interaction);
             update_mario_sound_and_camera(m);

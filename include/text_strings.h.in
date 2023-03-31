@@ -14,6 +14,8 @@
 #define TEXT_VARIABLE_X _("×")
 #define TEXT_UNFILLED_STAR _("☆")
 
+
+#define TEXT_OPTION _("OPTION")  // new in EU
 #define TEXT_OPTIONS_TITLE _("Options")
 #define TEXT_ANTI_ALIASING_OFF _("Anti Aliasing: Off")
 #define TEXT_ANTI_ALIASING_FAST _("Anti Aliasing: Fast")
@@ -27,6 +29,23 @@
 #define TEXT_DEDITHER_ON _("Dedither: On")
 #define TEXT_OPTION_TIP _("[Z]:[R]: Options")
 #define TEXT_OPTION_TIP2 _("[Z]:[R]: Return")
+
+
+#define TEXT_AA_SELECT _("ANTI ALIASING")
+#define TEXT_DEDITHER_SELECT _("DEDITHER")
+#define TEXT_SCREEN_SELECT _("SCREEN MODE")
+#define TEXT_CAP_SELECT _("FRAME CAP")
+#define TEXT_FILE_OFF _("Off")
+#define TEXT_FILE_ON _("On")
+#define TEXT_FILE_FAST _("Fast")
+#define TEXT_FILE_FANCY _("Fancy")
+#define TEXT_FILE_4_3 _("4:3")
+#define TEXT_FILE_16_10 _("16:10")
+#define TEXT_FILE_16_9 _("16:9")
+#define TEXT_FILE_30 _("30")
+#define TEXT_FILE_60 _("60")
+#define TEXT_FILE_25 _("25")
+#define TEXT_FILE_50 _("50")
 
 /**
  * Global Text

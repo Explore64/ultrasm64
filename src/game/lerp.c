@@ -33,6 +33,14 @@ void warp_node(struct Object *node) {
     vec3f_copy(node->header.gfx.scaleLerp, node->header.gfx.scale);
 }
 
+s32 absi_lerp(s32 x) {
+    if (x >= 0) {
+        return x;
+    } else {
+        return -x;
+    }
+}
+
 s32 approach_angle_lerp(s32 current, s32 target) {
     s32 diff1;
     s32 ret;
@@ -45,8 +53,8 @@ s32 approach_angle_lerp(s32 current, s32 target) {
     } else {
         ret = current - (target - current) >> 1;
     }
-    if ((diff1 < (absi(target - current + 0x10000)))
-               && (diff1 < (absi(target - current - 0x10000)))) {
+    if ((diff1 < (absi_lerp(target - current + 0x10000)))
+               && (diff1 < (absi_lerp(target - current - 0x10000)))) {
         return ret;
     } else {
         return ret + 0x8000;

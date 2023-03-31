@@ -248,16 +248,6 @@ static void goomba_act_jump(void) {
 }
 
 /**
- * Attack handler for when mario attacks a huge goomba with an attack that
- * doesn't kill it.
- * From the goomba's perspective, this is the same as the goomba attacking
- * mario.
- */
-void huge_goomba_weakly_attacked(void) {
-    o->oAction = GOOMBA_ACT_ATTACKED_MARIO;
-}
-
-/**
  * Update function for goomba.
  */
 void bhv_goomba_update(void) {

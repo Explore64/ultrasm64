@@ -289,7 +289,7 @@ void gd_absrot_mat4(Mat4f *mtx, s32 axisnum, f32 ang) {
             break;
     }
 
-    gd_create_rot_mat_angular(&rMat, &rot, ang / 2.0); //? 2.0f
+    gd_create_rot_mat_angular(&rMat, &rot, ang / 2.0f); //? 2.0f
     gd_mult_mat4f(mtx, &rMat, mtx);
 }
 
@@ -572,8 +572,8 @@ void gd_create_rot_mat_angular(Mat4f *mtx, struct GdVec3f *vec, f32 ang) {
     f32 s;
     f32 c;
 
-    s = sinf(ang / (DEG_PER_RAD / 2.0));
-    c = cosf(ang / (DEG_PER_RAD / 2.0));
+    s = sinf(ang / (DEG_PER_RAD / 2.0f));
+    c = cosf(ang / (DEG_PER_RAD / 2.0f));
 
     gd_create_rot_matrix(mtx, vec, s, c);
 }

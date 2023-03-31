@@ -406,7 +406,7 @@ void func_8019373C(struct ObjNet *net) {
                 net->shapePtr->scaledVtxGroup = make_group(0);
                 for (link = net->shapePtr->vtxGroup->firstMember; link != NULL; link = link->next) {
                     vtx = (struct ObjVertex *) link->obj;
-                    if (vtx->scaleFactor != 1.0) {
+                    if (vtx->scaleFactor != 1.0f) {
                         addto_group(net->shapePtr->scaledVtxGroup, &vtx->header);
                     }
                 }

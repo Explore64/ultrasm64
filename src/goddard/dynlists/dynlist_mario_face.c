@@ -358,8 +358,8 @@ struct DynList dynlist_mario_face_shape[] = {
         // Teeth color
         MakeDynObj(D_MATERIAL, 0),
             SetId(0),
-            SetAmbient(1.0, 1.0, 1.0),
-            SetDiffuse(1.0, 1.0, 1.0),
+            SetAmbient(1.0, 1.0, 1.0f),
+            SetDiffuse(1.0, 1.0, 1.0f),
         // Face color
         MakeDynObj(D_MATERIAL, 0),
             SetId(1),
@@ -368,33 +368,33 @@ struct DynList dynlist_mario_face_shape[] = {
         // Shadow on back of hat
         MakeDynObj(D_MATERIAL, 0),    
             SetId(2),
-            SetAmbient(0.362, 0.0, 0.0),
-            SetDiffuse(0.362, 0.0, 0.0),
+            SetAmbient(0.362, 0.0, 0.0f),
+            SetDiffuse(0.362, 0.0, 0.0f),
         // Cap emblem color
         MakeDynObj(D_MATERIAL, 0),
             SetId(3),
-            SetAmbient(1.0, 1.0, 1.0),
-            SetDiffuse(1.0, 1.0, 1.0),
+            SetAmbient(1.0, 1.0, 1.0f),
+            SetDiffuse(1.0, 1.0, 1.0f),
         // Eye color
         MakeDynObj(D_MATERIAL, 0),
             SetId(4),
-            SetAmbient(1.0, 1.0, 1.0),
-            SetDiffuse(1.0, 1.0, 1.0),
+            SetAmbient(1.0, 1.0, 1.0f),
+            SetDiffuse(1.0, 1.0, 1.0f),
         // Hair color
         MakeDynObj(D_MATERIAL, 0),
             SetId(5),
-            SetAmbient(0.362, 0.0, 0.0),
-            SetDiffuse(0.362, 0.0, 0.0),
+            SetAmbient(0.362, 0.0, 0.0f),
+            SetDiffuse(0.362, 0.0, 0.0f),
         // Mouth color
         MakeDynObj(D_MATERIAL, 0),
             SetId(6),
-            SetAmbient(0.526, 0.0, 0.0),
-            SetDiffuse(0.526, 0.0, 0.0),
+            SetAmbient(0.526, 0.0, 0.0f),
+            SetDiffuse(0.526, 0.0, 0.0f),
         // Cap color
         MakeDynObj(D_MATERIAL, 0),
             SetId(7),
-            SetAmbient(1.0, 0.0, 0.0),
-            SetDiffuse(1.0, 0.0, 0.0),
+            SetAmbient(1.0, 0.0, 0.0f),
+            SetDiffuse(1.0, 0.0, 0.0f),
     EndGroup(DYNOBJ_MARIO_FACE_MTL_GROUP),
 
     MakeDynObj(D_SHAPE, DYNOBJ_MARIO_FACE_SHAPE),

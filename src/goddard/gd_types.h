@@ -142,7 +142,6 @@ struct ObjGroup {
     /* 0x20 */ struct ListNode *lastMember; ///< Tail of a linked list for objects contained in this group
     /* 0x24 */ s32 memberTypes;   ///< OR'd collection of type flags for all objects in this group
     /* 0x28 */ s32 memberCount;  // number of objects in this group
-    /* 0x2C */ s32 debugPrint;  // might also be a type?
     /* 0x30 */ s32 linkType;
     /* 0x34 */ char name[0x40]; ///< possibly, only referenced in old code
     /* 0x74 */ s32 id;
@@ -165,9 +164,7 @@ struct ObjBone {
     /* 0x070 */ Mat4f mat70;
     /* 0x0B0 */ Mat4f matB0;
     /* 0x0F0 */ struct ObjShape *shapePtr; // from dead code in draw_bone
-    /* 0x0F4 */ f32 unkF4;              // also length?
     /* 0x0F8 */ f32 unkF8;              // length?
-    /* 0x0FC */ f32 unkFC;              // also length?
     /* 0x100 */ s32 colourNum;             // "colour"
     /* 0x104 */ s32 unk104;             // "flags"
     /* 0x108 */ s32 id;

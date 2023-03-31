@@ -14,6 +14,7 @@
 
 #include "make_const_nonconst.h"
 #include "levels/jrb/header.h"
+#include "game/farcall_helpers.h"
 
 static const LevelScript script_func_local_1[] = {
     OBJECT_WITH_ACTS(/*model*/ MODEL_JRB_SUNKEN_SHIP,          /*pos*/  2385,  3589,  3727, /*angle*/ 0,   0, 0, /*behParam*/ 0x00000000, /*beh*/ bhvSunkenShipPart,          /*acts*/ ACT_1),
@@ -119,11 +120,11 @@ const LevelScript level_jrb_entry[] = {
     LOAD_YAY0_TEXTURE(/*seg*/ 0x09, _water_yay0SegmentRomStart, _water_yay0SegmentRomEnd),
     LOAD_YAY0(        /*seg*/ 0x0A, _clouds_skybox_yay0SegmentRomStart, _clouds_skybox_yay0SegmentRomEnd),
     LOAD_YAY0(        /*seg*/ 0x05, _group4_yay0SegmentRomStart, _group4_yay0SegmentRomEnd),
-    LOAD_RAW(         /*seg*/ 0x0C, _group4_geoSegmentRomStart, _group4_geoSegmentRomEnd),
+    LOAD_RAW_WITH_CODE(0x0C, _group4_geoSegmentRomStart, _group4_geoSegmentRomEnd, _group4_geoSegmentBssStart, _group4_geoSegmentBssEnd),
     LOAD_YAY0(        /*seg*/ 0x06, _group13_yay0SegmentRomStart, _group13_yay0SegmentRomEnd),
-    LOAD_RAW(         /*seg*/ 0x0D, _group13_geoSegmentRomStart,  _group13_geoSegmentRomEnd),
+    LOAD_RAW_WITH_CODE(         /*seg*/ 0x0D, _group13_geoSegmentRomStart,  _group13_geoSegmentRomEnd, _group13_geoSegmentBssStart, _group13_geoSegmentBssEnd),
     LOAD_YAY0(        /*seg*/ 0x08, _common0_yay0SegmentRomStart, _common0_yay0SegmentRomEnd),
-    LOAD_RAW(         /*seg*/ 0x0F, _common0_geoSegmentRomStart,  _common0_geoSegmentRomEnd),
+    LOAD_RAW_WITH_CODE(         /*seg*/ 0x0F, _common0_geoSegmentRomStart,  _common0_geoSegmentRomEnd, _common0_geoSegmentBssStart, _common0_geoSegmentBssEnd),
     ALLOC_LEVEL_POOL(),
     MARIO(/*model*/ MODEL_MARIO, /*behParam*/ 0x00000001, /*beh*/ bhvMario),
     JUMP_LINK(script_func_global_1),
@@ -178,3 +179,7 @@ const LevelScript level_jrb_entry[] = {
     SLEEP_BEFORE_EXIT(/*frames*/ 1),
     EXIT(),
 };
+
+#include "game/behaviors/falling_pillar.inc.c"
+#include "game/behaviors/floating_box.inc.c"
+#include "game/behaviors/jrb_ship.inc.c"

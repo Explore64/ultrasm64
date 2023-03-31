@@ -4,6 +4,8 @@
  * Implements behaviour and spawning for fish located in the Secret Aquarium and other levels.
  */
 
+extern const struct Animation *const cyan_fish_seg6_anims_0600E264[];
+
 /**
  * Spawns fish with settings chosen by oBehParams2ndByte.
  * These settings are animations, colour, and spawn quantity.

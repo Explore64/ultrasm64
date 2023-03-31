@@ -114,9 +114,7 @@ struct AnimInfo {
     /*0x0A 0x42*/ u16 animTimer;
     /*0x0C 0x44*/ s32 animFrameAccelAssist;
     /*0x10 0x48*/ s32 animAccel;
-    Vec3s animRotStack[32];
-    Vec3f animPosStack[32];
-    u8 animRotStackNum;
+    Vec3s animRotStack[48];
     u8 animPosStackNum;
 };
 
@@ -135,7 +133,7 @@ struct GraphNodeObject {
     Vec3f posLerp;
     Vec3f scaleLerp;
     Vec3s angleLerp;
-    u16 matrixID[2];
+    u8 matrixID[2];
     u8 bothMats;
 };
 

@@ -46,35 +46,143 @@
 
 #define o gCurrentObject
 
-static s32 sCapSaveFlags[] = {
-    SAVE_FLAG_HAVE_WING_CAP,
-    SAVE_FLAG_HAVE_METAL_CAP,
-    SAVE_FLAG_HAVE_VANISH_CAP,
-};
+void curr_obj_random_blink(s32 *blinkTimer) {
+    if (*blinkTimer == 0) {
+        if ((s16)(random_float() * 100.0f) == 0) {
+            o->oAnimState = 1;
+            *blinkTimer = 1;
+        }
+    } else {
+        (*blinkTimer)++;
 
-// Boo Roll
-static s16 sBooHitRotations[] = {
-    6047, 5664, 5292, 4934, 4587, 4254, 3933, 3624, 3329, 3046, 2775,
-    2517, 2271, 2039, 1818, 1611, 1416, 1233, 1063, 906,  761,  629,
-    509,  402,  308,  226,  157,  100,  56,   25,   4,    0,
-};
+        if (*blinkTimer > 5) {
+            o->oAnimState = 0;
+        }
 
-#include "behaviors/star_door.inc.c"
-#include "behaviors/mr_i.inc.c"
-#include "behaviors/pole.inc.c"
-#include "behaviors/thi_top.inc.c"
-#include "behaviors/capswitch.inc.c"
-#include "behaviors/king_bobomb.inc.c"
-#include "behaviors/water_objs.inc.c"
-#include "behaviors/cannon.inc.c"
-#include "behaviors/chuckya.inc.c"
-#include "behaviors/breakable_wall.inc.c"
-#include "behaviors/kickable_board.inc.c"
-#include "behaviors/tower_door.inc.c"
-#include "behaviors/rotating_platform.inc.c"
-#include "behaviors/koopa_shell_underwater.inc.c"
-#include "behaviors/warp.inc.c"
-#include "behaviors/white_puff_explode.inc.c"
+        if (*blinkTimer > 10) {
+            o->oAnimState = 1;
+        }
+
+        if (*blinkTimer > 15) {
+            o->oAnimState = 0;
+            *blinkTimer = 0;
+        }
+    }
+}
+
+s32 check_if_moving_over_floor(f32 a0, f32 a1) {
+    struct Surface *sp24;
+    f32 sp20 = o->oPosX + sins(o->oMoveAngleYaw) * a1;
+    f32 floorHeight;
+    f32 sp18 = o->oPosZ + coss(o->oMoveAngleYaw) * a1;
+
+    floorHeight = find_floor(sp20, o->oPosY, sp18, &sp24);
+
+    if (absf(floorHeight - o->oPosY) < a0) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+s32 mario_is_far_below_object(f32 arg0) {
+    if (arg0 < o->oPosY - gMarioObject->oPosY) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+void bhv_spawn_star_no_level_exit(u32 sp20) {
+    struct Object *sp1C = spawn_object(o, MODEL_STAR, bhvSpawnedStarNoLevelExit);
+    sp1C->oBehParams = sp20 << 24;
+    sp1C->oInteractionSubtype = INT_SUBTYPE_NO_EXIT;
+    obj_set_angle(sp1C, 0, 0, 0);
+}
+
+
+/**
+ * Wait 50 frames, then play the race starting sound, disable time stop, and
+ * optionally begin the timer.
+ */
+s32 obj_begin_race(s32 noTimer) {
+    if (o->oTimer == 50) {
+        cur_obj_play_sound_2(SOUND_GENERAL_RACE_GUN_SHOT);
+
+        if (!noTimer) {
+            play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_LEVEL_SLIDE), 0);
+
+            level_control_timer(TIMER_CONTROL_SHOW);
+            level_control_timer(TIMER_CONTROL_START);
+
+            o->parentObj->oKoopaRaceEndpointRaceBegun = TRUE;
+        }
+
+        // Unfreeze mario and disable time stop to begin the race
+        set_mario_npc_dialog(MARIO_DIALOG_STOP);
+        disable_time_stop_including_mario();
+    } else if (o->oTimer > 50) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+// Copy of geo_update_projectile_pos_from_parent
+Gfx *geo_update_held_mario_pos(s32 run, UNUSED struct GraphNode *node, Mat4 mtx) {
+    if (run == TRUE) {
+        struct Object *obj = (struct Object *) gCurGraphNodeObject;
+        if (obj->prevObj != NULL) {
+            obj_update_pos_from_parent_transformation(mtx, obj->prevObj);
+            obj_set_gfx_pos_from_pos(obj->prevObj);
+        }
+    }
+
+    return NULL;
+}
+
+Gfx *geo_update_body_rot_from_parent(s32 callContext, UNUSED struct GraphNode *node, Mat4 mtx) {
+    if (callContext == GEO_CONTEXT_RENDER) {
+        struct Object *obj = (struct Object *) gCurGraphNodeObject;
+        if (obj->prevObj != NULL) {
+            obj_update_pos_from_parent_transformation(mtx, obj->prevObj);
+            obj_set_gfx_pos_from_pos(obj->prevObj);
+        }
+    }
+
+    return NULL;
+}
+
+s32 update_angle_from_move_flags(s32 *angle) {
+    if (o->oMoveFlags & OBJ_MOVE_HIT_WALL) {
+        *angle = o->oWallAngle;
+        return 1;
+    } else if (o->oMoveFlags & OBJ_MOVE_HIT_EDGE) {
+        *angle = o->oMoveAngleYaw + 0x8000;
+        return -1;
+    }
+    return 0;
+}
+
+#include "farcall_helpers.h"
+
+#include "game/behaviors/spawn_star_exit.inc.c"
+#include "game/behaviors/spawn_star.inc.c"
+#include "game/behaviors/hidden_star.inc.c"
+#include "behaviors/collide_particles.inc.c"
+#include "behaviors/water_mist_particle.inc.c"
+#include "behaviors/break_particles.inc.c"
+#include "behaviors/ground_particles.inc.c"
+#include "behaviors/wind.inc.c"
+#include "behaviors/strong_wind_particle.inc.c"
+#include "behaviors/corkbox.inc.c"
+#include "behaviors/elevator.inc.c"
+#include "behaviors/sound_waterfall.inc.c"
+#include "behaviors/sound_volcano.inc.c"
+#include "behaviors/sound_birds.inc.c"
+#include "behaviors/sound_ambient.inc.c"
+#include "behaviors/sound_sand.inc.c"
+
 
 // not in behavior file
 static struct SpawnParticlesInfo sMistParticles = {
@@ -109,55 +217,77 @@ void spawn_mist_particles_variable(s32 count, s32 offsetY, f32 size) {
     cur_obj_spawn_particles(&sMistParticles);
 }
 
-#include "behaviors/sparkle_spawn_star.inc.c"
-#include "behaviors/coin.inc.c"
-#include "behaviors/collide_particles.inc.c"
-#include "behaviors/door.inc.c"
-#include "behaviors/thwomp.inc.c"
-#include "behaviors/tumbling_bridge.inc.c"
-#include "behaviors/elevator.inc.c"
-#include "behaviors/water_mist_particle.inc.c"
-#include "behaviors/break_particles.inc.c"
-#include "behaviors/water_mist.inc.c"
-#include "behaviors/ground_particles.inc.c"
-#include "behaviors/wind.inc.c"
-#include "behaviors/ukiki_cage.inc.c"
-#include "behaviors/falling_rising_platform.inc.c"
-#include "behaviors/fishing_boo.inc.c"
-#include "behaviors/flamethrower.inc.c"
-#include "behaviors/bouncing_fireball.inc.c"
-#include "behaviors/shock_wave.inc.c"
-#include "behaviors/flame_mario.inc.c"
-#include "behaviors/spindrift.inc.c"
-#include "behaviors/tower_platform.inc.c"
-#include "behaviors/tree_particles.inc.c"
-#include "behaviors/square_platform_cycle.inc.c"
-#include "behaviors/piranha_bubbles.inc.c"
-#include "behaviors/purple_switch.inc.c"
-#include "behaviors/metal_box.inc.c"
-#include "behaviors/switch_hidden_objects.inc.c"
-#include "behaviors/breakable_box.inc.c"
+
 
 // not sure what this is doing here. not in a behavior file.
 Gfx *geo_move_mario_part_from_parent(s32 run, UNUSED struct GraphNode *node, Mat4 mtx) {
-    Mat4 sp20;
 
     if (run == TRUE) {
-        struct Object *sp1C = (struct Object *) gCurGraphNodeObject;
-        if (sp1C == gMarioObject && sp1C->prevObj != NULL) {
-            create_transformation_from_matrices(sp20, mtx, *gCurGraphNodeCamera->matrixPtr);
-            obj_update_pos_from_parent_transformation(sp20, sp1C->prevObj);
-            obj_set_gfx_pos_from_pos(sp1C->prevObj);
+        struct Object *obj = (struct Object *) gCurGraphNodeObject;
+        if (obj == gMarioObject && obj->prevObj != NULL) {
+            obj_update_pos_from_parent_transformation(mtx, obj->prevObj);
+            obj_set_gfx_pos_from_pos(obj->prevObj);
         }
     }
 
     return NULL;
 }
 
-#include "behaviors/heave_ho.inc.c"
-#include "behaviors/spawn_star_exit.inc.c"
-#include "behaviors/jumping_box.inc.c"
-#include "behaviors/boo_cage.inc.c"
+void common_anchor_mario_behavior(f32 sp28, f32 sp2C, s32 sp30) {
+    switch (o->parentObj->oChuckyaUnk88) {
+        case 0:
+            break;
+
+        case 1:
+            obj_set_gfx_pos_at_obj_pos(gMarioObject, o);
+            break;
+
+        case 2:
+            gMarioObject->oInteractStatus |= (INT_STATUS_MARIO_UNK2 + sp30);
+            gMarioStates[0].forwardVel = sp28;
+            gMarioStates[0].vel[1] = sp2C;
+            o->parentObj->oChuckyaUnk88 = 0;
+            break;
+
+        case 3:
+            gMarioObject->oInteractStatus |= (INT_STATUS_MARIO_UNK2 | INT_STATUS_MARIO_UNK6);
+            gMarioStates[0].forwardVel = 10.0f;
+            gMarioStates[0].vel[1] = 10.0f;
+            o->parentObj->oChuckyaUnk88 = 0;
+            break;
+    }
+
+    o->oMoveAngleYaw = o->parentObj->oMoveAngleYaw;
+
+    if (o->parentObj->activeFlags == ACTIVE_FLAG_DEACTIVATED) {
+        obj_mark_for_deletion(o);
+    }
+}
+
+void bhv_bobomb_anchor_mario_loop(void) {
+    common_anchor_mario_behavior(50.0f, 50.0f, INT_STATUS_MARIO_UNK6);
+}
+
+
+s32 approach_forward_vel(f32 *forwardVel, f32 spC, f32 sp10) {
+    s32 sp4 = 0;
+
+    if (*forwardVel > spC) {
+        *forwardVel -= sp10;
+        if (*forwardVel < spC) {
+            *forwardVel = spC;
+        }
+    } else if (*forwardVel < spC) {
+        *forwardVel += sp10;
+        if (*forwardVel > spC) {
+            *forwardVel = spC;
+        }
+    } else {
+        sp4 = 1;
+    }
+
+    return sp4;
+}
 
 // not in behavior file
 // n is the number of objects to spawn, r if the rate of change of phase (frequency?)
@@ -174,42 +304,6 @@ void spawn_sparkle_particles(s32 n, s32 a1, s32 a2, s32 r) {
     D_8035FF10 += r * 0x100;
 }
 
-#include "behaviors/grand_star.inc.c"
-#include "behaviors/bowser_key.inc.c"
-#include "behaviors/bullet_bill.inc.c"
-#include "behaviors/bowser.inc.c"
-#include "behaviors/bowser_falling_platform.inc.c"
-#include "behaviors/bowser_flame.inc.c"
-#include "behaviors/blue_fish.inc.c"
-
-// Not in behavior file, duplicate of vec3f_copy except without bad return.
-// Used in a few behavior files.
-void vec3f_copy_2(Vec3f dest, Vec3f src) {
-    dest[0] = src[0];
-    dest[1] = src[1];
-    dest[2] = src[2];
-}
-
-#include "behaviors/checkerboard_platform.inc.c"
-#include "behaviors/ddd_warp.inc.c"
-#include "behaviors/water_pillar.inc.c"
-#include "behaviors/moat_drainer.inc.c"
-#include "behaviors/bowser_key_cutscene.inc.c"
-#include "behaviors/moat_grill.inc.c"
-#include "behaviors/clock_arm.inc.c"
-#include "behaviors/ukiki.inc.c"
-#include "behaviors/lll_octagonal_rotating_mesh.inc.c"
-#include "behaviors/lll_sinking_rock_block.inc.c"
-#include "behaviors/lll_rotating_hex_flame.inc.c"
-#include "behaviors/lll_floating_wood_piece.inc.c"
-#include "behaviors/lll_volcano_flames.inc.c"
-#include "behaviors/lll_hexagonal_ring.inc.c"
-#include "behaviors/lll_sinking_rectangle.inc.c"
-#include "behaviors/tilting_inverted_pyramid.inc.c"
-#include "behaviors/koopa_shell.inc.c"
-#include "behaviors/tox_box.inc.c"
-#include "behaviors/piranha_plant.inc.c"
-#include "behaviors/bowser_puzzle_piece.inc.c"
 
 s32 set_obj_anim_with_accel_and_sound(s16 a0, s16 a1, s32 a2) {
     f32 sp1C;
@@ -226,34 +320,3 @@ s32 set_obj_anim_with_accel_and_sound(s16 a0, s16 a1, s32 a2) {
     return FALSE;
 }
 
-#include "behaviors/tuxie.inc.c"
-#include "behaviors/fish.inc.c"
-#include "behaviors/express_elevator.inc.c"
-#include "behaviors/bub.inc.c"
-#include "behaviors/exclamation_box.inc.c"
-#include "behaviors/sound_spawner.inc.c"
-#include "behaviors/ddd_sub.inc.c"
-#include "behaviors/sushi.inc.c"
-#include "behaviors/jrb_ship.inc.c"
-#include "behaviors/white_puff.inc.c"
-#include "behaviors/blue_coin.inc.c"
-#include "behaviors/grill_door.inc.c"
-#include "behaviors/wdw_water_level.inc.c"
-#include "behaviors/tweester.inc.c"
-#include "behaviors/boo.inc.c"
-#include "behaviors/bbh_tilting_trap.inc.c"
-#include "behaviors/bbh_haunted_bookshelf.inc.c"
-#include "behaviors/bbh_merry_go_round.inc.c"
-#include "behaviors/static_checkered_platform.inc.c"
-#ifndef VERSION_JP
-#include "behaviors/music_touch.inc.c"
-#endif
-#include "behaviors/castle_floor_trap.inc.c"
-#include "behaviors/pole_base.inc.c"
-#include "behaviors/sparkle_spawn.inc.c"
-#include "behaviors/scuttlebug.inc.c" // :scuttleeyes:
-#include "behaviors/whomp.inc.c"
-#include "behaviors/water_splashes_and_waves.inc.c"
-#include "behaviors/strong_wind_particle.inc.c"
-#include "behaviors/sl_snowman_wind.inc.c"
-#include "behaviors/sl_walking_penguin.inc.c"

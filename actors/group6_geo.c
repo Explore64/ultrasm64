@@ -6,7 +6,12 @@
 
 #include "common1.h"
 #include "group6.h"
+#include "game/farcall_helpers.h"
 
 #include "monty_mole/geo.inc.c"
 #include "ukiki/geo.inc.c"
 #include "fwoosh/geo.inc.c"
+
+#include "game/behaviors/monty_mole.inc.c"    // TODO
+#include "game/behaviors/ukiki.inc.c"
+#include "game/behaviors/ukiki_cage.inc.c"

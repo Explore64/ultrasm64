@@ -1,6 +1,6 @@
 // switch_hidden_objects.inc.c
 
-struct ObjectHitbox sBreakableBoxHitbox = {
+struct ObjectHitbox sBreakableBoxHitboxHidden = {
     /* interactType:      */ INTERACT_BREAKABLE,
     /* downOffset:        */ 20,
     /* damageOrCoinValue: */ 0,
@@ -12,7 +12,7 @@ struct ObjectHitbox sBreakableBoxHitbox = {
     /* hurtboxHeight:     */ 200,
 };
 
-void breakable_box_init(void) {
+void breakable_box_init_hidden(void) {
     o->oHiddenObjectUnkF4 = NULL;
     o->oAnimState = 1;
 
@@ -35,14 +35,14 @@ void breakable_box_init(void) {
 void hidden_breakable_box_actions(void) {
     struct Object *sp1C;
 
-    obj_set_hitbox(o, &sBreakableBoxHitbox);
+    obj_set_hitbox(o, &sBreakableBoxHitboxHidden);
     cur_obj_set_model(MODEL_BREAKABLE_BOX_SMALL);
 
     if (o->oAction == 0) {
         cur_obj_disable_rendering();
         cur_obj_become_intangible();
         if (o->oTimer == 0) {
-            breakable_box_init();
+            breakable_box_init_hidden();
         }
         if (o->oHiddenObjectUnkF4 == NULL) {
             o->oHiddenObjectUnkF4 = cur_obj_nearest_object_with_behavior(bhvFloorSwitchHiddenObjects);

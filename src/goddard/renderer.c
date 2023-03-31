@@ -20,6 +20,7 @@
 #include "types.h"
 #include "game/rendering_graph_node.h"
 #include "game/game_init.h"
+#include "engine/math_util.h"
 
 #define MAX_GD_DLS 1000
 #define OS_MESG_SI_COMPLETE 0x33333333
@@ -30,7 +31,7 @@
 
 #define MTX_INTPART_PACK(w1, w2) (((w1) &0xFFFF0000) | (((w2) >> 16) & 0xFFFF))
 #define MTX_FRACPART_PACK(w1, w2) ((((w1) << 16) & 0xFFFF0000) | ((w2) &0xFFFF))
-#define LOOKAT_PACK(c) ((s32) MIN(((c) * (128.0)), 127.0) & 0xff)
+#define LOOKAT_PACK(c) ((s32) MIN(((c) * (128.0f)), 127.0f) & 0xff)
 
 // structs
 struct GdDisplayList {
@@ -661,61 +662,6 @@ void reset_cur_dl_indices(void);
 
 // TODO: make a gddl_num_t?
 
-u32 get_alloc_mem_amt(void) {
-    return sAllocMemory;
-}
-
-/**
- * Returns the current time
- */
-s32 gd_get_ostime(void) {
-    return osGetTime();
-}
-
-f32 get_time_scale(void) {
-    return sTimeScaleFactor;
-}
-
-/**
- * Increments the current display list's Gfx index list and returns a pointer to the next Gfx element
- */
-static Gfx *next_gfx(void) {
-
-    return &sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++];
-}
-
-/**
- * Increments the current display list's Light index list and returns a pointer to the next Light element
- */
-static Lights4 *next_light(void) {
-
-    return &sCurrentGdDl->light[sCurrentGdDl->curLightIdx++];
-}
-
-/**
- * Increments the current display list's matrix index list and returns a pointer to the next matrix element
- */
-static Mtx *next_mtx(void) {
-
-    return &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
-}
-
-/**
- * Increments the current display list's vertex index list and returns a pointer to the next vertex element
- */
-static Vtx *next_vtx(void) {
-
-    return &sCurrentGdDl->vtx[sCurrentGdDl->curVtxIdx++];
-}
-
-/**
- * Increments the current display list's viewport list and returns a pointer to the next viewport element
- */
-static Vp *next_vp(void) {
-
-    return &sCurrentGdDl->vp[sCurrentGdDl->curVpIdx++];
-}
-
 /* 24A1D4 -> 24A220; orig name: func_8019BA04 */
 void gd_free(void *ptr) {
     sAllocMemory -= gd_free_mem(ptr);
@@ -776,7 +722,7 @@ void draw_indexed_dl(s32 dlNum, s32 gfxIdx) {
     } else {
         dl = sGdDLArray[dlNum]->gfx;  // only one display list
     }
-    gSPDisplayList(next_gfx(), GD_VIRTUAL_TO_PHYSICAL(dl));
+    gSPDisplayList(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], GD_VIRTUAL_TO_PHYSICAL(dl));
 }
 
 /* 24A598 -> 24A610; orig name: func_8019BDC8 */
@@ -784,7 +730,7 @@ void branch_cur_dl_to_num(s32 dlNum) {
     Gfx *dl;
 
     dl = sGdDLArray[dlNum]->gfx;
-    gSPDisplayList(next_gfx(), GD_VIRTUAL_TO_PHYSICAL(dl));
+    gSPDisplayList(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], GD_VIRTUAL_TO_PHYSICAL(dl));
 }
 
 /**
@@ -950,7 +896,7 @@ Gfx *gdm_gettestdl(s32 id) {
         update_view_and_dl(sHandView);
     }
     sCurrentGdDl = sMHeadMainDls[gGdFrameBufNum];
-    gSPEndDisplayList(next_gfx());
+    gSPEndDisplayList(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
     gddl = sCurrentGdDl;
     sUpdateMarioScene = TRUE;
 
@@ -1073,14 +1019,14 @@ void gd_draw_rect(f32 ulx, f32 uly, f32 lrx, f32 lry) {
     clamp_coords_to_active_view(&lrx, &lry);
 
     if (lrx > ulx && lry > uly) {
-        gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x + ulx),
+        gDPFillRectangle(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], (u32)(sActiveView->upperLeft.x + ulx),
                          (u32)(uly + sActiveView->upperLeft.y), (u32)(sActiveView->upperLeft.x + lrx),
                          (u32)(lry + sActiveView->upperLeft.y));
     }
 
-    gDPPipeSync(next_gfx());
-    gDPSetCycleType(next_gfx(), G_CYC_1CYCLE);
-    gDPSetRenderMode(next_gfx(), G_RM_ZB_OPA_SURF, G_RM_NOOP2);
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
+    gDPSetCycleType(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_CYC_1CYCLE);
+    gDPSetRenderMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_RM_ZB_OPA_SURF, G_RM_NOOP2);
 }
 
 /* 24BED8 -> 24CAC8; orig name: func_8019D708 */
@@ -1090,22 +1036,22 @@ void gd_draw_border_rect(f32 ulx, f32 uly, f32 lrx, f32 lry) {
 
     if (lrx > ulx && lry > uly) {
         gDPFillRectangle(
-            next_gfx(), (u32)(sActiveView->upperLeft.x + ulx), (u32)(uly + sActiveView->upperLeft.y),
+            &sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], (u32)(sActiveView->upperLeft.x + ulx), (u32)(uly + sActiveView->upperLeft.y),
             (u32)(sActiveView->upperLeft.x + ulx + 5.0f), (u32)(lry + sActiveView->upperLeft.y));
-        gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x + lrx - 5.0f),
+        gDPFillRectangle(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], (u32)(sActiveView->upperLeft.x + lrx - 5.0f),
                          (u32)(uly + sActiveView->upperLeft.y), (u32)(sActiveView->upperLeft.x + lrx),
                          (u32)(lry + sActiveView->upperLeft.y));
-        gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x + ulx),
+        gDPFillRectangle(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], (u32)(sActiveView->upperLeft.x + ulx),
                          (u32)(uly + sActiveView->upperLeft.y), (u32)(sActiveView->upperLeft.x + lrx),
                          (u32)(uly + sActiveView->upperLeft.y + 5.0f));
-        gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x + ulx),
+        gDPFillRectangle(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], (u32)(sActiveView->upperLeft.x + ulx),
                          (u32)(lry + sActiveView->upperLeft.y - 5.0f),
                          (u32)(sActiveView->upperLeft.x + lrx), (u32)(lry + sActiveView->upperLeft.y));
     }
 
-    gDPPipeSync(next_gfx());
-    gDPSetCycleType(next_gfx(), G_CYC_1CYCLE);
-    gDPSetRenderMode(next_gfx(), G_RM_ZB_OPA_SURF, G_RM_NOOP2);
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
+    gDPSetCycleType(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_CYC_1CYCLE);
+    gDPSetRenderMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_RM_ZB_OPA_SURF, G_RM_NOOP2);
 }
 
 /* 24CAC8 -> 24CDB4; orig name: func_8019E2F8 */
@@ -1116,20 +1062,20 @@ void gd_dl_set_fill(struct GdColour *colour) {
     g = colour->g * 255.0f;
     b = colour->b * 255.0f;
 
-    gDPPipeSync(next_gfx());
-    gDPSetCycleType(next_gfx(), G_CYC_FILL);
-    gDPSetRenderMode(next_gfx(), G_RM_OPA_SURF, G_RM_OPA_SURF2);
-    gDPSetFillColor(next_gfx(), GPACK_RGBA5551(r, g, b, 1) << 16 | GPACK_RGBA5551(r, g, b, 1));
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
+    gDPSetCycleType(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_CYC_FILL);
+    gDPSetRenderMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_RM_OPA_SURF, G_RM_OPA_SURF2);
+    gDPSetFillColor(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], GPACK_RGBA5551(r, g, b, 1) << 16 | GPACK_RGBA5551(r, g, b, 1));
 }
 
 /* 24CDB4 -> 24CE10; orig name: func_8019E5E4 */
 void gd_dl_set_z_buffer_area(void) {
-    gDPSetDepthImage(next_gfx(), GD_LOWER_24(sActiveView->parent->zbuf));
+    gDPSetDepthImage(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], GD_LOWER_24(sActiveView->parent->zbuf));
 }
 
 /* 24CE10 -> 24CF2C; orig name: func_8019E640 */
 void gd_set_color_fb(void) {
-    gDPSetColorImage(next_gfx(), G_IM_FMT_RGBA, G_IM_SIZ_16b, sActiveView->parent->lowerRight.x,
+    gDPSetColorImage(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_IM_FMT_RGBA, G_IM_SIZ_16b, sActiveView->parent->lowerRight.x,
                      GD_LOWER_24(sActiveView->parent->colourBufs[gGdFrameBufNum]));
 }
 
@@ -1179,23 +1125,23 @@ s32 gd_startdisplist(s32 memarea) {
             cpy_remaining_gddl(sCurrentGdDl, sCurrentGdDl->parent);
             break;
     }
-    gDPPipeSync(next_gfx());
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
 
     return sCurrentGdDl->number;
 }
 
 /* 24D1D4 -> 24D23C */
 void gd_enddlsplist(void) {
-    gDPPipeSync(next_gfx());
-    gSPEndDisplayList(next_gfx());
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
+    gSPEndDisplayList(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
 }
 
 /* 24D23C -> 24D39C; orig name: func_8019EA6C */
 s32 gd_enddlsplist_parent(void) {
     s32 curDlIdx = 0; // 24
 
-    gDPPipeSync(next_gfx());
-    gSPEndDisplayList(next_gfx());
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
+    gSPEndDisplayList(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
     if (sCurrentGdDl->parent != NULL) {
         sCurrentGdDl->parent->curVtxIdx = (sCurrentGdDl->parent->curVtxIdx + sCurrentGdDl->curVtxIdx);
         sCurrentGdDl->parent->curMtxIdx = (sCurrentGdDl->parent->curMtxIdx + sCurrentGdDl->curMtxIdx);
@@ -1261,8 +1207,8 @@ void mat4_to_mtx(Mat4f *src, Mtx *dst) {
  */
 void gd_dl_mul_matrix(Mat4f *mtx) {
     mat4_to_mtx(mtx, &DL_CURRENT_MTX(sCurrentGdDl));
-    gSPMatrix(next_gfx(), osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)), sMtxParamType | G_MTX_MUL | G_MTX_NOPUSH);
-    next_mtx();
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)), sMtxParamType | G_MTX_MUL | G_MTX_NOPUSH);
+    &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
 }
 
 /**
@@ -1270,9 +1216,9 @@ void gd_dl_mul_matrix(Mat4f *mtx) {
  */
 void gd_dl_load_matrix(Mat4f *mtx) {
     mat4_to_mtx(mtx, &DL_CURRENT_MTX(sCurrentGdDl));
-    gSPMatrix(next_gfx(), osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)),
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)),
               sMtxParamType | G_MTX_LOAD | G_MTX_NOPUSH);
-    next_mtx();
+    &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
 }
 
 /**
@@ -1280,7 +1226,7 @@ void gd_dl_load_matrix(Mat4f *mtx) {
  * identity matrix.
  */
 void gd_dl_load_identity_matrix(void) {
-    gSPMatrix(next_gfx(), osVirtualToPhysical(&sIdnMtx), sMtxParamType | G_MTX_LOAD | G_MTX_NOPUSH);
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&sIdnMtx), sMtxParamType | G_MTX_LOAD | G_MTX_NOPUSH);
 }
 
 /**
@@ -1288,14 +1234,14 @@ void gd_dl_load_identity_matrix(void) {
  * stack.
  */
 void gd_dl_push_matrix(void) {
-    gSPMatrix(next_gfx(), osVirtualToPhysical(&sIdnMtx), sMtxParamType | G_MTX_MUL | G_MTX_PUSH);
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&sIdnMtx), sMtxParamType | G_MTX_MUL | G_MTX_PUSH);
 }
 
 /**
  * Adds a display list operation that pops a matrix from the matrix stack.
  */
 void gd_dl_pop_matrix(void) {
-    gSPPopMatrix(next_gfx(), sMtxParamType);
+    gSPPopMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], sMtxParamType);
 }
 
 /**
@@ -1303,8 +1249,8 @@ void gd_dl_pop_matrix(void) {
  */
 void gd_dl_mul_trans_matrix(f32 x, f32 y, f32 z) {
     guTranslate(&DL_CURRENT_MTX(sCurrentGdDl), x, y, z);
-    gSPMatrix(next_gfx(), osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)), sMtxParamType | G_MTX_MUL | G_MTX_NOPUSH);
-    next_mtx();
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)), sMtxParamType | G_MTX_MUL | G_MTX_NOPUSH);
+    &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
 }
 
 /**
@@ -1312,9 +1258,9 @@ void gd_dl_mul_trans_matrix(f32 x, f32 y, f32 z) {
  */
 void gd_dl_load_trans_matrix(f32 x, f32 y, f32 z) {
     guTranslate(&DL_CURRENT_MTX(sCurrentGdDl), x, y, z);
-    gSPMatrix(next_gfx(), osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)),
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)),
               sMtxParamType | G_MTX_LOAD | G_MTX_NOPUSH);
-    next_mtx();
+    &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
 }
 
 /**
@@ -1350,7 +1296,7 @@ void gd_dl_lookat(struct ObjCamera *cam, f32 arg1, f32 arg2, f32 arg3, f32 arg4,
     gd_mat4f_lookat(&cam->unkE8, arg1, arg2, arg3, arg4, arg5, arg6, sinf(arg7), cosf(arg7), 0.0f);
 
     mat4_to_mtx(&cam->unkE8, &DL_CURRENT_MTX(sCurrentGdDl));
-    gSPMatrix(next_gfx(), osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)),
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&DL_CURRENT_MTX(sCurrentGdDl)),
             G_MTX_PROJECTION | G_MTX_MUL | G_MTX_NOPUSH);
 
     /*  col           colc          dir
@@ -1412,8 +1358,8 @@ void gd_dl_lookat(struct ObjCamera *cam, f32 arg1, f32 arg2, f32 arg3, f32 arg4,
     lookat->l[1].l.colc[2] = 0;
     lookat->l[1].l.pad2 = 0;
 
-    gSPLookAt(next_gfx(), osVirtualToPhysical(&D_801BE7D0[gGdFrameBufNum]));
-    next_mtx();
+    gSPLookAt(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&D_801BE7D0[gGdFrameBufNum]));
+    &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
 }
 
 /* 24E1A8 -> 24E230; orig name: func_8019F9D8 */
@@ -1458,7 +1404,7 @@ Vtx *gd_dl_make_vertex(f32 x, f32 y, f32 z, f32 alpha) {
     DL_CURRENT_VTX(sCurrentGdDl).n.a = (u8)(alpha * 255.0f);
 
     vtx = &DL_CURRENT_VTX(sCurrentGdDl);
-    next_vtx();
+    &sCurrentGdDl->vtx[sCurrentGdDl->curVtxIdx++];
     return vtx;
 }
 
@@ -1483,8 +1429,8 @@ void gd_dl_make_triangle(f32 x1, f32 y1, f32 z1, f32 x2, f32 y2, f32 z2, f32 x3,
     gd_dl_make_vertex(x2, y2, z2, 1.0f);
     gd_dl_make_vertex(x3, y3, z3, 1.0f);
 
-    gSPVertex(next_gfx(), osVirtualToPhysical(vtx), 3, 0);
-    gSP1Triangle(next_gfx(), 0, 1, 2, 0);
+    gSPVertex(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(vtx), 3, 0);
+    gSP1Triangle(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], 0, 1, 2, 0);
 }
 
 /* 24E808 -> 24E840 */
@@ -1500,15 +1446,15 @@ void gd_dl_flush_vertices(void) {
 
     if (sVertexBufCount != 0) {
         // load vertex data
-        gSPVertex(next_gfx(), osVirtualToPhysical(&sCurrentGdDl->vtx[sVertexBufStartIndex]), sVertexBufCount, 0);
+        gSPVertex(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&sCurrentGdDl->vtx[sVertexBufStartIndex]), sVertexBufCount, 0);
         // load triangle data
         for (i = 0; i < sTriangleBufCount; i++) {
             if (sTriangleBufCount - i > 1) {
-                gSP2Triangles(next_gfx(), sTriangleBuf[i][0] - sVertexBufStartIndex, sTriangleBuf[i][1] - sVertexBufStartIndex, sTriangleBuf[i][2] - sVertexBufStartIndex, 0,
+                gSP2Triangles(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], sTriangleBuf[i][0] - sVertexBufStartIndex, sTriangleBuf[i][1] - sVertexBufStartIndex, sTriangleBuf[i][2] - sVertexBufStartIndex, 0,
                                         sTriangleBuf[i + 1][0] - sVertexBufStartIndex, sTriangleBuf[i + 1][1] - sVertexBufStartIndex, sTriangleBuf[i + 1][2] - sVertexBufStartIndex, 0);
                                         i++;
             } else {
-                gSP1Triangle(next_gfx(), sTriangleBuf[i][0] - sVertexBufStartIndex, sTriangleBuf[i][1] - sVertexBufStartIndex, sTriangleBuf[i][2] - sVertexBufStartIndex, 0);
+                gSP1Triangle(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], sTriangleBuf[i][0] - sVertexBufStartIndex, sTriangleBuf[i][1] - sVertexBufStartIndex, sTriangleBuf[i][2] - sVertexBufStartIndex, 0);
             }
         }
     }
@@ -1573,14 +1519,14 @@ void gd_dl_hilite(s32 idx, // material GdDl number; offsets into hilite array
     sp34 = 32.0f; // y scale factor?
     hilite = &sHilites[idx];
 
-    gDPSetPrimColor(next_gfx(), 0, 0, (s32)(colour->r * 255.0f), (s32)(colour->g * 255.0f),
-                    (s32)(colour->b * 255.0f), 255);
+    gDPSetPrimColor(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], 0, 0, (s32)(colour->r * 255.0f), (s32)(colour->g * 255.0f), (s32)(colour->b * 255.0f), 255);
     sp40.z = cam->unkE8[0][2] + arg4->x;
     sp40.y = cam->unkE8[1][2] + arg4->y;
     sp40.x = cam->unkE8[2][2] + arg4->z;
-    sp3C = sqrtf(SQ(sp40.z) + SQ(sp40.y) + SQ(sp40.x));
-    if (sp3C > 0.1) {
-        sp3C = 1.0 / sp3C; //? 1.0f
+    sp3C = (SQ(sp40.z) + SQ(sp40.y) + SQ(sp40.x));
+    if (sp3C > sqr(0.1f)) {
+        sp3C = sqrtf(sp3C);
+        sp3C = 1.0f / sp3C; //? 1.0f
         sp40.z *= sp3C;
         sp40.y *= sp3C;
         sp40.x *= sp3C;
@@ -1621,7 +1567,7 @@ s32 gd_dl_material_lighting(s32 id, struct GdColour *colour, s32 material) {
             break;
         case GD_MTL_SHINE_DL:
             gddl_is_loading_shine_dl(TRUE);
-            gDPSetHilite1Tile(next_gfx(), G_TX_RENDERTILE, &sHilites[id], 32, 32);
+            gDPSetHilite1Tile(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_TX_RENDERTILE, &sHilites[id], 32, 32);
             break;
         case GD_MTL_BREAK:
             break;
@@ -1644,10 +1590,10 @@ s32 gd_dl_material_lighting(s32 id, struct GdColour *colour, s32 material) {
             DL_CURRENT_LIGHT(sCurrentGdDl).l[0].l.colc[1] = 0;
             DL_CURRENT_LIGHT(sCurrentGdDl).l[0].l.colc[2] = 0;
 
-            gSPNumLights(next_gfx(), NUMLIGHTS_1);
-            gSPLight(next_gfx(), osVirtualToPhysical(&DL_CURRENT_LIGHT(sCurrentGdDl).l), LIGHT_1);
-            gSPLight(next_gfx(), osVirtualToPhysical(&DL_CURRENT_LIGHT(sCurrentGdDl).a), LIGHT_2);
-            next_light();
+            gSPNumLights(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], NUMLIGHTS_1);
+            gSPLight(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&DL_CURRENT_LIGHT(sCurrentGdDl).l), LIGHT_1);
+            gSPLight(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&DL_CURRENT_LIGHT(sCurrentGdDl).a), LIGHT_2);
+            &sCurrentGdDl->light[sCurrentGdDl->curLightIdx++];
             if (id > 0) {
                 gd_enddlsplist();
             }
@@ -1667,7 +1613,7 @@ s32 gd_dl_material_lighting(s32 id, struct GdColour *colour, s32 material) {
     DL_CURRENT_LIGHT(sCurrentGdDl).a.l.colc[1] = scaledColours[1];
     DL_CURRENT_LIGHT(sCurrentGdDl).a.l.colc[2] = scaledColours[2];
     // 801A10EC
-    gSPNumLights(next_gfx(), numLights);
+    gSPNumLights(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], numLights);
     for (i = 0; i < numLights; i++) { // L801A1134
         scaledColours[0] = colour->r * sLightScaleColours[i].r * 255.0f;
         scaledColours[1] = colour->g * sLightScaleColours[i].g * 255.0f;
@@ -1689,11 +1635,11 @@ s32 gd_dl_material_lighting(s32 id, struct GdColour *colour, s32 material) {
         DL_CURRENT_LIGHT(sCurrentGdDl).l[i].l.dir[1] = lightDir[1];
         DL_CURRENT_LIGHT(sCurrentGdDl).l[i].l.dir[2] = lightDir[2];
         // 801A14C4
-        gSPLight(next_gfx(), osVirtualToPhysical(&DL_CURRENT_LIGHT(sCurrentGdDl).l[i]), i + 1);
+        gSPLight(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&DL_CURRENT_LIGHT(sCurrentGdDl).l[i]), i + 1);
     }
     // L801A1550
-    gSPLight(next_gfx(), osVirtualToPhysical(&DL_CURRENT_LIGHT(sCurrentGdDl)), i + 1);
-    next_light();
+    gSPLight(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&DL_CURRENT_LIGHT(sCurrentGdDl)), i + 1);
+    &sCurrentGdDl->light[sCurrentGdDl->curLightIdx++];
     gd_enddlsplist();
     return 0;
 }
@@ -1743,8 +1689,8 @@ static void gd_dl_viewport(void) {
     vp->vp.vtrans[2] = 0x1FF;  // z offset
     vp->vp.vtrans[3] = 0x000;
 
-    gSPViewport(next_gfx(), osVirtualToPhysical(vp));
-    next_vp();
+    gSPViewport(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(vp));
+    &sCurrentGdDl->vp[sCurrentGdDl->curVpIdx++];
 }
 
 u32 gGoddardRenderTable[] = {
@@ -1769,59 +1715,59 @@ u32 gGoddardRenderTable[] = {
 static void update_render_mode(void) {
     if ((sActiveView->flags & VIEW_ALLOC_ZBUF) != 0) {
         if (sAlpha != 0xff) {
-            gDPSetRenderMode(next_gfx(), gGoddardRenderTable[0 + gAntiAliasing], gGoddardRenderTable[6 + gAntiAliasing]);
+            gDPSetRenderMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], gGoddardRenderTable[0 + gAntiAliasing + 1], gGoddardRenderTable[6 + gAntiAliasing + 1]);
         } else {
-            gDPSetRenderMode(next_gfx(), gGoddardRenderTable[3 + gAntiAliasing], G_RM_NOOP2);
+            gDPSetRenderMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], gGoddardRenderTable[3 + gAntiAliasing + 1], G_RM_NOOP2);
         }
     } else {
         if (sAlpha != 0xff) {
-            gDPSetRenderMode(next_gfx(), gGoddardRenderTable[9 + gAntiAliasing], gGoddardRenderTable[12 + gAntiAliasing]);
+            gDPSetRenderMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], gGoddardRenderTable[9 + gAntiAliasing + 1], gGoddardRenderTable[12 + gAntiAliasing + 1]);
         } else {
-            gDPSetRenderMode(next_gfx(), gGoddardRenderTable[3 + gAntiAliasing], G_RM_NOOP2);
+            gDPSetRenderMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], gGoddardRenderTable[3 + gAntiAliasing + 1], G_RM_NOOP2);
         }
     }
 }
 
 /* 250300 -> 250640 */
 void Unknown801A1B30(void) {
-    gDPPipeSync(next_gfx());
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
     gd_set_color_fb();
     gd_dl_set_fill(&sActiveView->colour);
-    gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x), (u32)(sActiveView->upperLeft.y),
+    gDPFillRectangle(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], (u32)(sActiveView->upperLeft.x), (u32)(sActiveView->upperLeft.y),
                      (u32)(sActiveView->upperLeft.x + sActiveView->lowerRight.x - 1.0f),
                      (u32)(sActiveView->upperLeft.y + sActiveView->lowerRight.y - 1.0f));
-    gDPPipeSync(next_gfx());
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
 }
 
 /* 250640 -> 250AE0 */
 void Unknown801A1E70(void) {
-    gDPPipeSync(next_gfx());
-    gDPSetCycleType(next_gfx(), G_CYC_FILL);
-    gDPSetRenderMode(next_gfx(), G_RM_OPA_SURF, G_RM_OPA_SURF2);
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
+    gDPSetCycleType(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_CYC_FILL);
+    gDPSetRenderMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_RM_OPA_SURF, G_RM_OPA_SURF2);
     gd_dl_set_z_buffer_area();
-    gDPSetColorImage(next_gfx(), G_IM_FMT_RGBA, G_IM_SIZ_16b, sActiveView->parent->lowerRight.x,
+    gDPSetColorImage(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_IM_FMT_RGBA, G_IM_SIZ_16b, sActiveView->parent->lowerRight.x,
                      GD_LOWER_24(sActiveView->parent->zbuf));
-    gDPSetFillColor(next_gfx(), GPACK_ZDZ(G_MAXFBZ, 0) << 16 | GPACK_ZDZ(G_MAXFBZ, 0));
-    gDPFillRectangle(next_gfx(), (u32)(sActiveView->upperLeft.x), (u32)(sActiveView->upperLeft.y),
+    gDPSetFillColor(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], GPACK_ZDZ(G_MAXFBZ, 0) << 16 | GPACK_ZDZ(G_MAXFBZ, 0));
+    gDPFillRectangle(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], (u32)(sActiveView->upperLeft.x), (u32)(sActiveView->upperLeft.y),
                      (u32)(sActiveView->upperLeft.x + sActiveView->lowerRight.x - 1.0f),
                      (u32)(sActiveView->upperLeft.y + sActiveView->lowerRight.y - 1.0f));
-    gDPPipeSync(next_gfx());
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
     gd_set_color_fb();
 }
 
 /* 250AE0 -> 250B30; orig name: func_801A2310 */
 void gd_set_one_cycle(void) {
-    gDPSetCycleType(next_gfx(), G_CYC_1CYCLE);
+    gDPSetCycleType(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_CYC_1CYCLE);
     update_render_mode();
 }
 
 /* 250B58 -> 250C18 */
 void gddl_is_loading_shine_dl(s32 dlLoad) {
     if (dlLoad) {
-        gSPDisplayList(next_gfx(), osVirtualToPhysical(&gd_dl_mario_face_shine));
+        gSPDisplayList(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(&gd_dl_mario_face_shine));
     } else {
-        gSPTexture(next_gfx(), 0x8000, 0x8000, 0, G_TX_RENDERTILE, G_OFF);
-        gDPSetCombineMode(next_gfx(), G_CC_SHADE, G_CC_SHADE);
+        gSPTexture(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], 0x8000, 0x8000, 0, G_TX_RENDERTILE, G_OFF);
+        gDPSetCombineMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_CC_SHADE, G_CC_SHADE);
     }
 }
 
@@ -1865,15 +1811,15 @@ void start_view_dl(struct ObjView *view) {
         uly = lry - 1.0f;
     }
 
-    gDPSetScissor(next_gfx(), G_SC_NON_INTERLACE, ulx, uly, lrx, lry);
-    gSPClearGeometryMode(next_gfx(), 0xFFFFFFFF);
-    gSPSetGeometryMode(next_gfx(), G_LIGHTING | G_CULL_BACK | G_SHADING_SMOOTH | G_SHADE);
+    gDPSetScissor(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_SC_NON_INTERLACE, ulx, uly, lrx, lry);
+    gSPClearGeometryMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], 0xFFFFFFFF);
+    gSPSetGeometryMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_LIGHTING | G_CULL_BACK | G_SHADING_SMOOTH | G_SHADE);
     if (view->flags & VIEW_ALLOC_ZBUF) {
-        gSPSetGeometryMode(next_gfx(), G_ZBUFFER);
+        gSPSetGeometryMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_ZBUFFER);
     }
     gd_dl_viewport();
     update_render_mode();
-    gDPPipeSync(next_gfx());
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
 }
 
 /* 251014 -> 251A1C; orig name: func_801A2844 */
@@ -2049,10 +1995,10 @@ void gd_setproperty(enum GdProperty prop, f32 f1, f32 f2, f32 f3) {
             parm = (s32) f1;
             switch (parm) {
                 case 1:
-                    gSPSetGeometryMode(next_gfx(), G_LIGHTING);
+                    gSPSetGeometryMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_LIGHTING);
                     break;
                 case 0:
-                    gSPClearGeometryMode(next_gfx(), G_LIGHTING);
+                    gSPClearGeometryMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_LIGHTING);
                     break;
             }
             break;
@@ -2075,10 +2021,10 @@ void gd_setproperty(enum GdProperty prop, f32 f1, f32 f2, f32 f3) {
             parm = (s32) f1;
             switch (parm) {
                 case 1:
-                    gSPSetGeometryMode(next_gfx(), G_CULL_BACK);
+                    gSPSetGeometryMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_CULL_BACK);
                     break;
                 case 0:
-                    gSPClearGeometryMode(next_gfx(), G_CULL_BACK);
+                    gSPClearGeometryMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_CULL_BACK);
                     break;
             }
             break;
@@ -2110,19 +2056,19 @@ void gd_create_ortho_matrix(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
     uintptr_t rotMtx;
 
     // Should produce G_RDPHALF_1 in Fast3D
-    gSPPerspNormalize(next_gfx(), 0xFFFF);
+    gSPPerspNormalize(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], 0xFFFF);
 
     guOrtho(&DL_CURRENT_MTX(sCurrentGdDl), l, r, b, t, n, f, 1.0f);
     orthoMtx = GD_LOWER_29(&DL_CURRENT_MTX(sCurrentGdDl));
-    gSPMatrix(next_gfx(), orthoMtx, G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], orthoMtx, G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
 
-    next_mtx();
+    &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
     guRotate(&DL_CURRENT_MTX(sCurrentGdDl), 0.0f, 0.0f, 0.0f, 1.0f);
     rotMtx = GD_LOWER_29(&DL_CURRENT_MTX(sCurrentGdDl));
-    gSPMatrix(next_gfx(), rotMtx, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], rotMtx, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
 
     func_801A3324(0.0f, 0.0f, 0.0f);
-    next_mtx();
+    &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
 }
 
 /* 25245C -> 25262C */
@@ -2134,17 +2080,17 @@ void gd_create_perspective_matrix(f32 fovy, f32 aspect, f32 near, f32 far) {
     sGdPerspTimer += 0.1f;
     guPerspective(&DL_CURRENT_MTX(sCurrentGdDl), &perspNorm, fovy, aspect, near, far, 1.0f);
 
-    gSPPerspNormalize(next_gfx(), perspNorm);
+    gSPPerspNormalize(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], perspNorm);
 
     perspecMtx = GD_LOWER_29(&DL_CURRENT_MTX(sCurrentGdDl));
-    gSPMatrix(next_gfx(), perspecMtx, G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
-    next_mtx();
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], perspecMtx, G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
+    &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
 
     guRotate(&DL_CURRENT_MTX(sCurrentGdDl), 0.0f, 0.0f, 0.0f, 1.0f);
     rotMtx = GD_LOWER_29(&DL_CURRENT_MTX(sCurrentGdDl));
-    gSPMatrix(next_gfx(), rotMtx, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+    gSPMatrix(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], rotMtx, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
     func_801A3324(0.0f, 0.0f, 0.0f);
-    next_mtx();
+    &sCurrentGdDl->mtx[sCurrentGdDl->curMtxIdx++];
 }
 
 /* 25262C -> 252AF8 */
@@ -2629,20 +2575,20 @@ void gd_put_sprite(u16 *sprite, s32 x, s32 y, s32 wx, s32 wy) {
     s32 c; // 5c
     s32 r; // 58
 
-    gSPDisplayList(next_gfx(), osVirtualToPhysical(gd_dl_sprite_start_tex_block));
+    gSPDisplayList(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], osVirtualToPhysical(gd_dl_sprite_start_tex_block));
     for (r = 0; r < wy; r += 32) {
         for (c = 0; c < wx; c += 32) {
-             gDPLoadTextureBlock(next_gfx(), (r * 32) + sprite + c, G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 0,
+             gDPLoadTextureBlock(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], (r * 32) + sprite + c, G_IM_FMT_RGBA, G_IM_SIZ_16b, 32, 32, 0,
                 G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD)
-             gSPTextureRectangle(next_gfx(), x << 2, (y + r) << 2, (x + 32) << 2, (y + r + 32) << 2,
+             gSPTextureRectangle(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], x << 2, (y + r) << 2, (x + 32) << 2, (y + r + 32) << 2,
                 G_TX_RENDERTILE, 0, 0, 1 << 10, 1 << 10);
         }
     }
 
-    gDPPipeSync(next_gfx());
-    gDPSetCycleType(next_gfx(), G_CYC_1CYCLE);
-    gDPSetRenderMode(next_gfx(), G_RM_ZB_OPA_SURF, G_RM_NOOP2);
-    gSPTexture(next_gfx(), 0x8000, 0x8000, 0, G_TX_RENDERTILE, G_OFF);
+    gDPPipeSync(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++]);
+    gDPSetCycleType(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_CYC_1CYCLE);
+    gDPSetRenderMode(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], G_RM_ZB_OPA_SURF, G_RM_NOOP2);
+    gSPTexture(&sCurrentGdDl->gfx[sCurrentGdDl->curGfxIdx++], 0x8000, 0x8000, 0, G_TX_RENDERTILE, G_OFF);
 }
 
 /* 254DFC -> 254F94; orig name: proc_dyn_list */

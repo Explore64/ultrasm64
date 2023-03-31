@@ -6,5 +6,8 @@
 
 #include "common1.h"
 #include "group16.h"
+#include "game/farcall_helpers.h"
 
 #include "moneybag/geo.inc.c"
+
+#include "game/behaviors/moneybag.inc.c"

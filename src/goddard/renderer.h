@@ -34,9 +34,6 @@ enum GdSceneId {
 extern s32 gGdFrameBufNum;
 
 // functions
-u32 get_alloc_mem_amt(void);
-s32 gd_get_ostime(void);
-f32 get_time_scale(void);
 void gd_exit(UNUSED s32 code) NORETURN;
 void gd_free(void *ptr);
 void *gd_allocblock(u32 size);

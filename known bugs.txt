@@ -1,11 +1,6 @@
-bowser crashes
-king bomb omb crashes when picked up, probably throwmatrix related
+most grabbable objects crash the RSP when grabbed.
 mirror mario be missing, my guess is throwmatrix, though it's possible matstack is also involved
 goddard crash when coming back from a demo
-King Whomp's attempts to crush Mario like the ant he is prove fruitless.
 transition lerping occasionally has gaps in it
-transitions also get cut off on the right side in widescreen
-memory collision only presumably caused by goddard's very existence
-long jumping into an enemy counts as attacking it
 some NPC's will disppear during dialogue, assuming throwmatrix strikes again
-audio corruption. I blame goddard
+certain point of the thwomp crashes the game trying to find_floor

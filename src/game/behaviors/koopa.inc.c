@@ -253,36 +253,6 @@ static void koopa_shelled_act_lying(void) {
 }
 
 /**
- * Attack handler for regular-sized shelled koopa.
- * Lose shell and enter lying action.
- */
-void shelled_koopa_attack_handler(s32 attackType) {
-    if (o->header.gfx.scale[0] > 0.8f) {
-        cur_obj_play_sound_2(SOUND_OBJ_KOOPA_DAMAGE);
-
-        o->oKoopaMovementType = KOOPA_BP_UNSHELLED;
-        o->oAction = KOOPA_UNSHELLED_ACT_LYING;
-        o->oForwardVel = 20.0f;
-
-        // If attacked from the side, get knocked away from mario
-        if (attackType != ATTACK_FROM_ABOVE && attackType != ATTACK_GROUND_POUND_OR_TWIRL) {
-            o->oMoveAngleYaw = obj_angle_to_object(gMarioObject, o);
-        }
-
-        cur_obj_set_model(MODEL_KOOPA_WITHOUT_SHELL);
-        spawn_object(o, MODEL_KOOPA_SHELL, bhvKoopaShell);
-
-        //! Because bob-ombs/corkboxes come after koopa in processing order,
-        //  they can interact with the koopa on the same frame that this
-        //  happens. This causes the koopa to die immediately.
-        cur_obj_become_intangible();
-    } else {
-        // Die if tiny koopa
-        obj_die_if_health_non_positive();
-    }
-}
-
-/**
  * Update function for both regular and tiny shelled koopa.
  */
 static void koopa_shelled_update(void) {
@@ -453,33 +423,6 @@ static void koopa_unshelled_update(void) {
 
     obj_handle_attacks(&sKoopaHitbox, o->oAction, sKoopaUnshelledAttackHandlers);
     cur_obj_move_standard(-78);
-}
-
-/**
- * Wait 50 frames, then play the race starting sound, disable time stop, and
- * optionally begin the timer.
- */
-s32 obj_begin_race(s32 noTimer) {
-    if (o->oTimer == 50) {
-        cur_obj_play_sound_2(SOUND_GENERAL_RACE_GUN_SHOT);
-
-        if (!noTimer) {
-            play_music(SEQ_PLAYER_LEVEL, SEQUENCE_ARGS(4, SEQ_LEVEL_SLIDE), 0);
-
-            level_control_timer(TIMER_CONTROL_SHOW);
-            level_control_timer(TIMER_CONTROL_START);
-
-            o->parentObj->oKoopaRaceEndpointRaceBegun = TRUE;
-        }
-
-        // Unfreeze mario and disable time stop to begin the race
-        set_mario_npc_dialog(MARIO_DIALOG_STOP);
-        disable_time_stop_including_mario();
-    } else if (o->oTimer > 50) {
-        return TRUE;
-    }
-
-    return FALSE;
 }
 
 /**

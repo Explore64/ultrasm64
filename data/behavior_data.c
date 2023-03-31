@@ -2974,17 +2974,6 @@ const BehaviorScript bhvInsideCannon[] = {
     BREAK(),
 };
 
-const BehaviorScript bhvStaticCheckeredPlatform[] = {
-    BEGIN(OBJ_LIST_SURFACE),
-    OR_INT(oFlags, OBJ_FLAG_UPDATE_GFX_POS_AND_ANGLE),
-    LOAD_COLLISION_DATA(checkerboard_platform_seg8_collision_0800D710),
-    SET_HOME(),
-    BEGIN_LOOP(),
-        CALL_NATIVE(bhv_static_checkered_platform_loop),
-        CALL_NATIVE(load_object_collision_model),
-    END_LOOP(),
-};
-
 const BehaviorScript bhvUnused2A10[] = {
     BEGIN(OBJ_LIST_DEFAULT),
     BILLBOARD(),

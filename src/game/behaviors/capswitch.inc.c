@@ -1,5 +1,11 @@
 // capswitch.inc.c
 
+static s32 sCapSaveFlags[] = {
+    SAVE_FLAG_HAVE_WING_CAP,
+    SAVE_FLAG_HAVE_METAL_CAP,
+    SAVE_FLAG_HAVE_VANISH_CAP,
+};
+
 void cap_switch_act_0(void) {
     o->oAnimState = o->oBehParams2ndByte;
     cur_obj_scale(0.5f);

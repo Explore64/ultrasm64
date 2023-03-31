@@ -55,8 +55,12 @@ void update_mario_platform(void) {
             if (floor != NULL && floor->object != NULL) {
                 gMarioPlatform = floor->object;
                 gMarioObject->platform = floor->object;
+                gMarioObject->platform->header.gfx.node.flags |= GRAPH_RENDER_PRIORITY;
             } else {
                 gMarioPlatform = NULL;
+                if (gMarioObject->platform) {
+                    gMarioObject->platform->header.gfx.node.flags &= ~GRAPH_RENDER_PRIORITY;
+                }
                 gMarioObject->platform = NULL;
             }
             break;

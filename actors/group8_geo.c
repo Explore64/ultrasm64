@@ -6,6 +6,8 @@
 
 #include "common1.h"
 #include "group8.h"
+#include "game/farcall_helpers.h"
 
-#include "springboard/geo.inc.c"
 #include "capswitch/geo.inc.c"
+
+#include "game/behaviors/capswitch.inc.c"

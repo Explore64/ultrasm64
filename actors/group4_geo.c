@@ -6,7 +6,13 @@
 
 #include "common1.h"
 #include "group4.h"
+#include "game/farcall_helpers.h"
 
 #include "clam_shell/geo.inc.c"
 #include "sushi/geo.inc.c"
 #include "unagi/geo.inc.c"
+
+#include "game/behaviors/clam.inc.c"
+#include "game/behaviors/sushi.inc.c"
+#include "game/behaviors/unagi.inc.c"
+#include "game/behaviors/whirlpool.inc.c"

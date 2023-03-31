@@ -6,5 +6,6 @@
 
 #include "common1.h"
 #include "group2.h"
+#include "game/farcall_helpers.h"
 
 #include "bully/geo.inc.c"

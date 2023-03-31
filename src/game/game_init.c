@@ -667,7 +667,7 @@ void setup_game_memory(void) {
     set_segment_base_addr(24, (void *) gDemoInputsMemAlloc);
     setup_dma_table_list(&gDemoInputsBuf, gDemoInputs, gDemoInputsMemAlloc);
     // Setup Level Script Entry
-    load_segment(0x10, _entrySegmentRomStart, _entrySegmentRomEnd, MEMORY_POOL_LEFT);
+    load_segment(0x10, _entrySegmentRomStart, _entrySegmentRomEnd, MEMORY_POOL_LEFT, NULL, NULL);
     // Setup Segment 2 (Fonts, Text, etc)
     load_segment_decompress(2, _segment2_mio0SegmentRomStart, _segment2_mio0SegmentRomEnd);
 }
@@ -751,8 +751,8 @@ void thread5_game_loop(UNUSED void *arg) {
         }
         if (gPlayer1Controller->buttonPressed & R_JPAD) {
             gAntiAliasing++;
-            if (gAntiAliasing == 3) {
-                gAntiAliasing = 0;
+            if (gAntiAliasing == 2) {
+                gAntiAliasing = -1;
             }
         }
         gGameTime = osGetTime() - first;

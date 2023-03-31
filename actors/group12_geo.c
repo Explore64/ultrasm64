@@ -6,6 +6,7 @@
 
 #include "common1.h"
 #include "group12.h"
+#include "game/farcall_helpers.h"
 
 #include "bowser_flame/geo.inc.c"
 #include "impact_ring/geo.inc.c"
@@ -13,3 +14,10 @@
 #include "bowser/geo.inc.c"
 #include "bomb/geo.inc.c"
 #include "impact_smoke/geo.inc.c"
+
+#include "game/behaviors/bowser_flame.inc.c"
+#include "game/behaviors/grand_star.inc.c"
+#include "game/behaviors/bowser.inc.c"
+#include "game/behaviors/bowser_falling_platform.inc.c"
+#include "game/behaviors/bowser_bomb.inc.c"
+#include "game/behaviors/shock_wave.inc.c"

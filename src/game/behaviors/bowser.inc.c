@@ -1643,13 +1643,11 @@ void bowser_thrown_dropped_update(void) {
  */
 void bhv_bowser_loop(void) {
     s16 angleToMario;  // AngleToMario from Bowser's perspective
-    s16 angleToCenter; // AngleToCenter from Bowser's perspective
 
     // Set distance/angle values
     o->oBowserDistToCenter = sqrtf(o->oPosX * o->oPosX + o->oPosZ * o->oPosZ);
     o->oBowserAngleToCenter = atan2s(0.0f - o->oPosZ, 0.0f - o->oPosX);
     angleToMario = abs_angle_diff(o->oMoveAngleYaw, o->oAngleToMario);
-    angleToCenter = abs_angle_diff(o->oMoveAngleYaw, o->oBowserAngleToCenter);
 
     // Reset Status
     o->oBowserStatus &= ~0xFF;
@@ -1729,20 +1727,6 @@ void bhv_bowser_init(void) {
     // Set eyes status
     o->oBowserEyesTimer = 0;
     o->oBowserEyesShut = FALSE;
-}
-
-Gfx *geo_update_body_rot_from_parent(s32 callContext, UNUSED struct GraphNode *node, Mat4 mtx) {
-    if (callContext == GEO_CONTEXT_RENDER) {
-        Mat4 mtx2;
-        struct Object *obj = (struct Object *) gCurGraphNodeObject;
-        if (obj->prevObj != NULL) {
-            create_transformation_from_matrices(mtx2, mtx, *gCurGraphNodeCamera->matrixPtr);
-            obj_update_pos_from_parent_transformation(mtx2, obj->prevObj);
-            obj_set_gfx_pos_from_pos(obj->prevObj);
-        }
-    }
-
-    return NULL;
 }
 
 /**

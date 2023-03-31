@@ -720,6 +720,7 @@ s32 cutscene_event(CameraEvent event, struct Camera * c, s16 start, s16 end);
 s32 cutscene_spawn_obj(u32 obj, s16 frame);
 void set_fov_shake(s16 amplitude, s16 decay, s16 shakeSpeed);
 void fov_logic(void);
+s32 camera_approach_s16_symmetric(s16 current, s16 target, s16 increment);
 
 void set_fov_function(u8 func);
 void cutscene_set_fov_shake_preset(u8 preset);

@@ -15,6 +15,10 @@
 #define ATTACK_HANDLER_SPECIAL_HUGE_GOOMBA_WEAKLY_ATTACKED 7
 #define ATTACK_HANDLER_SQUISHED_WITH_BLUE_COIN 8
 
+#define POS_OP_SAVE_POSITION 0
+#define POS_OP_COMPUTE_VELOCITY 1
+#define POS_OP_RESTORE_POSITION 2
+
 void shelled_koopa_attack_handler(s32 attackType);
 void obj_spit_fire(s16 relativePosX, s16 relativePosY, s16 relativePosZ, f32 scale, s32 model,
                    f32 startSpeed, f32 endSpeed, s16 movePitch);

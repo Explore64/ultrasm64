@@ -1835,6 +1835,7 @@ void init_mario(void) {
 
         capObject->oMoveAngleYaw = 0;
     }
+    gMarioState->marioObj->header.gfx.node.flags |= GRAPH_RENDER_PRIORITY;
 }
 
 void init_mario_from_save_file(void) {

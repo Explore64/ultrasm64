@@ -55,23 +55,23 @@ struct DynList dynlist_mario_eye_right_shape[] = {
         // ???
         MakeDynObj(D_MATERIAL, 0),
             SetId(0),
-            SetAmbient(0.0, 0.291, 1.0),
-            SetDiffuse(0.0, 0.291, 1.0),
+            SetAmbient(0.0, 0.291, 1.0f),
+            SetDiffuse(0.0, 0.291, 1.0f),
         // Iris color
         MakeDynObj(D_MATERIAL, 0),
             SetId(1),
-            SetAmbient(0.0, 0.576, 1.0),
-            SetDiffuse(0.0, 0.576, 1.0),
+            SetAmbient(0.0, 0.576, 1.0f),
+            SetDiffuse(0.0, 0.576, 1.0f),
         // Pupil color
         MakeDynObj(D_MATERIAL, 0),
             SetId(2),
-            SetAmbient(0.0, 0.0, 0.0),
-            SetDiffuse(0.0, 0.0, 0.0),
+            SetAmbient(0.0, 0.0, 0.0f),
+            SetDiffuse(0.0, 0.0, 0.0f),
         // Color of spot in the middle of pupil
         MakeDynObj(D_MATERIAL, 0),
             SetId(3),
-            SetAmbient(1.0, 1.0, 1.0),
-            SetDiffuse(1.0, 1.0, 1.0),
+            SetAmbient(1.0, 1.0, 1.0f),
+            SetDiffuse(1.0, 1.0, 1.0f),
     EndGroup(DYNOBJ_MARIO_RIGHT_EYE_MTL_GROUP),
 
     MakeDynObj(D_SHAPE, DYNOBJ_MARIO_RIGHT_EYE_SHAPE),
@@ -132,23 +132,23 @@ struct DynList dynlist_mario_eye_left_shape[28] = {
         // ???
         MakeDynObj(D_MATERIAL, 0),
             SetId(0),
-            SetAmbient(0.0, 0.291, 1.0),
-            SetDiffuse(0.0, 0.291, 1.0),
+            SetAmbient(0.0, 0.291, 1.0f),
+            SetDiffuse(0.0, 0.291, 1.0f),
         // Iris color
         MakeDynObj(D_MATERIAL, 0),
             SetId(1),
-            SetAmbient(0.0, 0.576, 1.0),
-            SetDiffuse(0.0, 0.576, 1.0),
+            SetAmbient(0.0, 0.576, 1.0f),
+            SetDiffuse(0.0, 0.576, 1.0f),
         // Pupil color
         MakeDynObj(D_MATERIAL, 0),
             SetId(2),
-            SetAmbient(0.0, 0.0, 0.0),
-            SetDiffuse(0.0, 0.0, 0.0),
+            SetAmbient(0.0, 0.0, 0.0f),
+            SetDiffuse(0.0, 0.0, 0.0f),
         // Color of spot in the middle of pupil
         MakeDynObj(D_MATERIAL, 0),
             SetId(3),
-            SetAmbient(1.0, 1.0, 1.0),
-            SetDiffuse(1.0, 1.0, 1.0),
+            SetAmbient(1.0, 1.0, 1.0f),
+            SetDiffuse(1.0, 1.0, 1.0f),
     EndGroup(DYNOBJ_MARIO_LEFT_EYE_MTL_GROUP),
 
     MakeDynObj(D_SHAPE, DYNOBJ_MARIO_LEFT_EYE_SHAPE),

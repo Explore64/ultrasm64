@@ -1,36 +1,4 @@
 // chuckya.inc.c
-
-void common_anchor_mario_behavior(f32 sp28, f32 sp2C, s32 sp30) {
-    switch (o->parentObj->oChuckyaUnk88) {
-        case 0:
-            break;
-
-        case 1:
-            obj_set_gfx_pos_at_obj_pos(gMarioObject, o);
-            break;
-
-        case 2:
-            gMarioObject->oInteractStatus |= (INT_STATUS_MARIO_UNK2 + sp30);
-            gMarioStates[0].forwardVel = sp28;
-            gMarioStates[0].vel[1] = sp2C;
-            o->parentObj->oChuckyaUnk88 = 0;
-            break;
-
-        case 3:
-            gMarioObject->oInteractStatus |= (INT_STATUS_MARIO_UNK2 | INT_STATUS_MARIO_UNK6);
-            gMarioStates[0].forwardVel = 10.0f;
-            gMarioStates[0].vel[1] = 10.0f;
-            o->parentObj->oChuckyaUnk88 = 0;
-            break;
-    }
-
-    o->oMoveAngleYaw = o->parentObj->oMoveAngleYaw;
-
-    if (o->parentObj->activeFlags == ACTIVE_FLAG_DEACTIVATED) {
-        obj_mark_for_deletion(o);
-    }
-}
-
 void bhv_chuckya_anchor_mario_loop(void) {
     common_anchor_mario_behavior(40.0f, 40.0f, INT_STATUS_MARIO_UNK6);
 }
@@ -66,31 +34,7 @@ s32 unknown_chuckya_function(s32 sp20, f32 sp24, f32 sp28, s16 sp2C) {
     return sp1C;
 }
 
-s32 approach_forward_vel(f32 *forwardVel, f32 spC, f32 sp10) {
-    s32 sp4 = 0;
-
-    if (*forwardVel > spC) {
-        *forwardVel -= sp10;
-        if (*forwardVel < spC) {
-            *forwardVel = spC;
-        }
-    } else if (*forwardVel < spC) {
-        *forwardVel += sp10;
-        if (*forwardVel > spC) {
-            *forwardVel = spC;
-        }
-    } else {
-        sp4 = 1;
-    }
-
-    return sp4;
-}
-
 void chuckya_act_0(void) {
-    s32 sp3C;
-#ifdef AVOID_UB
-    sp3C = 0;
-#endif
     s32 sp28;
 
     if (o->oTimer == 0) {

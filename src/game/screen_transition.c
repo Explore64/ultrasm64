@@ -11,7 +11,10 @@
 #include "memory.h"
 #include "screen_transition.h"
 #include "segment2.h"
+#include "print.h"
 #include "sm64.h"
+#include "ingame_menu.h"
+#include "rendering_graph_node.h"
 
 u8 sTransitionColorFadeCount[4] = { 0 };
 u16 sTransitionTextureFadeCount[2] = { 0 };
@@ -21,7 +24,7 @@ f32 sTransitionTextureFadeCountLerp[2] = { 0 };
 s32 set_and_reset_transition_fade_timer(s8 fadeTimer, u8 transTime) {
     s32 reset = FALSE;
 
-    if (sTransitionColorFadeCount[fadeTimer] == transTime) {
+    if (sTransitionColorFadeCount[fadeTimer] >= transTime) {
         sTransitionColorFadeCount[fadeTimer] = 0;
         sTransitionColorFadeCountLerp[fadeTimer] = 0;
         sTransitionTextureFadeCount[fadeTimer] = 0;
@@ -57,7 +60,6 @@ Vtx *vertex_transition_color(struct WarpTransitionData *transData, u8 alpha) {
         make_vertex(verts, 1, gScreenWidth, 0, -1, 0, 0, r, g, b, alpha);
         make_vertex(verts, 2, gScreenWidth, SCREEN_HEIGHT, -1, 0, 0, r, g, b, alpha);
         make_vertex(verts, 3, GFX_DIMENSIONS_FROM_LEFT_EDGE(0), SCREEN_HEIGHT, -1, 0, 0, r, g, b, alpha);
-    } else {
     }
     return verts;
 }
@@ -138,6 +140,19 @@ void make_tex_transition_vertex(Vtx *verts, s32 n, s8 fadeTimer, struct WarpTran
     make_vertex(verts, n, x, y, -1, tx * 32, ty * 32, r, g, b, 255);
 }
 
+#define BLANK 0, 0, 0, PRIMITIVE, 0, 0, 0, PRIMITIVE
+
+void prepare_blank_box(void) {
+    gDPSetCombineMode(gDisplayListHead++, BLANK, BLANK);
+    gDPSetRenderMode(gDisplayListHead++, G_RM_OPA_SURF, G_RM_OPA_SURF2);
+    gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
+}
+
+void finish_blank_box(void) {
+    gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
+    gSPDisplayList(gDisplayListHead++, dl_hud_img_end);
+}
+
 void load_tex_transition_vertex(Vtx *verts, s8 fadeTimer, struct WarpTransitionData *transData, s16 centerTransX, s16 centerTransY, s16 texTransRadius, s8 transTexType) {
     switch (transTexType) {
         case TRANS_TYPE_MIRROR:
@@ -153,10 +168,20 @@ void load_tex_transition_vertex(Vtx *verts, s8 fadeTimer, struct WarpTransitionD
             make_tex_transition_vertex(verts, 3, fadeTimer, transData, centerTransX, centerTransY, -texTransRadius, texTransRadius, 0, 0);
             break;
     }
-    make_tex_transition_vertex(verts, 4, fadeTimer, transData, centerTransX, centerTransY, -2000, -2000, 0, 0);
-    make_tex_transition_vertex(verts, 5, fadeTimer, transData, centerTransX, centerTransY, 2000, -2000, 0, 0);
-    make_tex_transition_vertex(verts, 6, fadeTimer, transData, centerTransX, centerTransY, 2000, 2000, 0, 0);
-    make_tex_transition_vertex(verts, 7, fadeTimer, transData, centerTransX, centerTransY, -2000, 2000, 0, 0);
+    f32 centerX = (-texTransRadius) * coss(sTransitionTextureFadeCountLerp[fadeTimer]) - (-texTransRadius) * sins(sTransitionTextureFadeCountLerp[fadeTimer]) + centerTransX;
+    if (centerX > 0) {
+        f32 centerY = (texTransRadius) * sins(sTransitionTextureFadeCountLerp[fadeTimer]) - (texTransRadius) * coss(sTransitionTextureFadeCountLerp[fadeTimer]) + centerTransY;
+        prepare_blank_box();
+        gDPSetPrimColor(gDisplayListHead++, 0, 0, transData->red, transData->blue, transData->green, 255);
+        gDPFillRectangle(gDisplayListHead++, 0, 0, centerX, SCREEN_HEIGHT);
+        gDPFillRectangle(gDisplayListHead++, gScreenWidth - centerX, 0, gScreenWidth, SCREEN_HEIGHT);
+        if (centerY > 0) {
+            gDPFillRectangle(gDisplayListHead++, centerX, 0, gScreenWidth - centerX, centerY);
+            gDPFillRectangle(gDisplayListHead++, centerX, SCREEN_HEIGHT - centerY, gScreenWidth - centerX, SCREEN_HEIGHT);
+        }
+        gDPSetPrimColor(gDisplayListHead++, 0, 0, 255, 255, 255, 255);
+        finish_blank_box();
+    }
 }
 
 void *sTextureTransitionID[] = {
@@ -177,10 +202,6 @@ void render_textured_transition(s8 fadeTimer, s8 transTime, struct WarpTransitio
     if (verts != NULL) {
         load_tex_transition_vertex(verts, fadeTimer, transData, centerTransX, centerTransY, texTransRadius, transTexType);
         gSPDisplayList(gDisplayListHead++, dl_proj_mtx_fullscreen)
-        gDPSetCombineMode(gDisplayListHead++, G_CC_SHADE, G_CC_SHADE);
-        gDPSetRenderMode(gDisplayListHead++, G_RM_AA_OPA_SURF, G_RM_AA_OPA_SURF2);
-        gSPVertex(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(verts), 8, 0);
-        gSPDisplayList(gDisplayListHead++, dl_transition_draw_filled_region);
         gDPPipeSync(gDisplayListHead++);
         gDPSetCombineMode(gDisplayListHead++, G_CC_MODULATEIDECALA, G_CC_MODULATEIDECALA);
         gDPSetRenderMode(gDisplayListHead++, G_RM_CLD_SURF, G_RM_CLD_SURF2);
@@ -241,45 +262,33 @@ void render_screen_transition(s8 fadeTimer, s8 transType, u8 transTime, struct W
 }
 
 Gfx *render_cannon_circle_base(void) {
-    Vtx *verts;
-    Gfx *dlist;
-    if (gScreenWidth > 320) {
-        verts = alloc_display_list(8 * sizeof(*verts));
-        dlist = alloc_display_list(21 * sizeof(*dlist));
-    } else {
-        verts = alloc_display_list(4 * sizeof(*verts));
-        dlist = alloc_display_list(17 * sizeof(*dlist));
-    }
+    Vtx *verts = alloc_display_list(4 * sizeof(*verts));
+    Gfx *dlist = alloc_display_list(24 * sizeof(*dlist));
     Gfx *g = dlist;
 
     if (verts != NULL && dlist != NULL) {
-        make_vertex(verts, 4, 0, 0, -1, 0, 0, 0, 0, 0, 255);
-        make_vertex(verts, 5, (0), 0, -1, 0, 0, 0, 0, 0, 255);
-        make_vertex(verts, 6, GFX_DIMENSIONS_FROM_RIGHT_EDGE(0), SCREEN_HEIGHT, -1, 0, 0, 0, 0, 0, 255);
-        make_vertex(verts, 7, GFX_DIMENSIONS_FROM_LEFT_EDGE(0), SCREEN_HEIGHT, -1, 0, 0, 0, 0, 0, 255);
-
-        if (gScreenWidth > 320) {
-            make_vertex(verts, 4, 0, 0, -1, 0, 0, 0, 0, 0, 255);
-            make_vertex(verts, 5, gScreenWidth, 0, -1, 0, 0, 0, 0, 0, 255);
-            make_vertex(verts, 6, gScreenWidth, SCREEN_HEIGHT, -1, 0, 0, 0, 0, 0, 255);
-            make_vertex(verts, 7, 0, SCREEN_HEIGHT, -1, 0, 0, 0, 0, 0, 255);
-        }
+        f32 scaleVal = (f32) SCREEN_WIDTH / (f32)gScreenWidth;
+        make_vertex(verts, 0, ((gScreenWidth / 2) - (SCREEN_WIDTH / 2)) * scaleVal, 0, -1, -1152, 1824, 0, 0, 0, 255);
+        make_vertex(verts, 1, ((gScreenWidth / 2) + (SCREEN_WIDTH / 2)) * scaleVal, 0, -1, 1152, 1824, 0, 0, 0, 255);
+        make_vertex(verts, 2, ((gScreenWidth / 2) + (SCREEN_WIDTH / 2)) * scaleVal, SCREEN_HEIGHT, -1, 1152, 192, 0, 0, 0, 255);
+        make_vertex(verts, 3, ((gScreenWidth / 2) - (SCREEN_WIDTH / 2)) * scaleVal, SCREEN_HEIGHT, -1, -1152, 192, 0, 0, 0, 255);
 
         gSPDisplayList(g++, dl_proj_mtx_fullscreen);
-        gDPSetCycleType(g++, G_CYC_1CYCLE);
-        gDPSetCombineMode(g++, G_CC_MODULATEIDECALA, G_CC_MODULATEIDECALA);
+        gDPSetCombineMode(g++, G_CC_MODULATEIDECALA, G_CC_PASS2);
         gDPSetTextureFilter(g++, G_TF_BILERP);
         gDPLoadTextureBlock(g++, sTextureTransitionID[TEX_TRANS_CIRCLE], G_IM_FMT_IA, G_IM_SIZ_8b, 32, 64, 0,
             G_TX_WRAP | G_TX_MIRROR, G_TX_WRAP | G_TX_MIRROR, 5, 6, G_TX_NOLOD, G_TX_NOLOD);
         gSPTexture(g++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON);
-        gSPVertex(g++, VIRTUAL_TO_PHYSICAL(verts), 4, 0);
+        gSPVertex(g++, VIRTUAL_TO_PHYSICAL(verts), 8, 0);
         gSPDisplayList(g++, dl_draw_quad_verts_0123);
         gSPTexture(g++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_OFF);
-        if (gScreenWidth > 320) {
-            gDPSetCombineMode(g++, G_CC_SHADE, G_CC_SHADE);
-            gSPVertex(g++, VIRTUAL_TO_PHYSICAL(verts + 4), 4, 4);
-            gSP2Triangles(g++, 4, 0, 3, 0, 4, 3, 7, 0);
-            gSP2Triangles(g++, 1, 5, 6, 0, 1, 6, 2, 0);
+        if (gScreenMode) {
+            prepare_blank_box();
+            gDPSetPrimColor(g++, 0, 0, 0, 0, 0, 255);
+            gDPFillRectangle(g++, 0, 0, ((gScreenWidth / 2) - (SCREEN_WIDTH / 2)) + 4, SCREEN_HEIGHT);
+            gDPFillRectangle(g++, gScreenWidth - ((gScreenWidth / 2) - (SCREEN_WIDTH / 2)) - 4, 0, gScreenWidth, SCREEN_HEIGHT);
+        gDPSetPrimColor(gDisplayListHead++, 0, 0, 255, 255, 255, 255);
+        finish_blank_box();
         }
         gSPDisplayList(g++, dl_screen_transition_end);
         gSPEndDisplayList(g);
@@ -295,7 +304,7 @@ Gfx *geo_cannon_circle_base(s32 callContext, struct GraphNode *node, UNUSED Mat4
 
     if (callContext == GEO_CONTEXT_RENDER && gCurrentArea != NULL
         && gCurrentArea->camera->mode == CAMERA_MODE_INSIDE_CANNON) {
-        graphNode->fnNode.node.flags = (graphNode->fnNode.node.flags & 0xFF) | (LAYER_TRANSPARENT << 8);
+        graphNode->fnNode.node.flags = (graphNode->fnNode.node.flags & 0xFF) | 0x500;
 #ifndef L3DEX2_ALONE
         dlist = render_cannon_circle_base();
 #endif

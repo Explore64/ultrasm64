@@ -45,7 +45,8 @@
 #define LAYER_OPAQUE_DECAL      2
 #define LAYER_ALPHA             3
 #define LAYER_TRANSPARENT       4
-#define LAYER_TRANSPARENT_DECAL 5
+#define LAYER_TRANSPARENT_DECAL 6
+#define LAYER_TRANSPARENT_ZSORT 5
 
 #define INPUT_NONZERO_ANALOG         0x0001
 #define INPUT_A_PRESSED              0x0002

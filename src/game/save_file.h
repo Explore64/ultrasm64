@@ -57,7 +57,7 @@ struct MainMenuSaveData {
     u32 coinScoreAges[NUM_SAVE_FILES];
     u8 soundMode: 2;
     u8 language: 2;
-    u8 antiAliasing : 2;
+    s8 antiAliasing : 2;
     u8 screenMode : 2;
     u8 dedither : 1;
     u8 frameCap : 1;

@@ -382,17 +382,6 @@ static void wiggler_act_fall_through_floor(void) {
 }
 
 /**
- * Attack handler for when wiggler is jumped or ground pounded on.
- * Stop and enter the jumped on action.
- */
-void wiggler_jumped_on_attack_handler(void) {
-    cur_obj_play_sound_2(SOUND_OBJ_WIGGLER_ATTACKED);
-    o->oAction = WIGGLER_ACT_JUMPED_ON;
-    o->oForwardVel = o->oVelY = 0.0f;
-    o->oWigglerSquishSpeed = 0.4f;
-}
-
-/**
  * Update function for bhvWigglerHead.
  */
 void bhv_wiggler_update(void) {

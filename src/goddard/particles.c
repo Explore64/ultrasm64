@@ -295,7 +295,7 @@ void func_80182A08(struct ObjParticle *ptc, struct GdVec3f *b) {
                     sp20->unk38.x = gd_rand_float() * 50.0 - 25.0f;
                     sp20->unk38.y = gd_rand_float() * 50.0 - 25.0f;
                     sp20->unk38.z = gd_rand_float() * 50.0 - 25.0f;
-                } while (gd_vec3f_magnitude(&sp20->unk38) > 30.0);
+                } while (gd_vec3f_magnitude(&sp20->unk38) > 30.0f);
                 sp20->unk38.x += b->x;
                 sp20->unk38.y += b->y;
                 sp20->unk38.z += b->z;
@@ -417,7 +417,7 @@ void move_particle(struct ObjParticle *ptc) {
                             sp2C->unk38.x = gd_rand_float() * 64.0 - 32.0f;
                             sp2C->unk38.y = gd_rand_float() * 64.0 - 32.0f;
                             sp2C->unk38.z = gd_rand_float() * 64.0 - 32.0f;
-                        } while (gd_vec3f_magnitude(&sp2C->unk38) > 32.0);
+                        } while (gd_vec3f_magnitude(&sp2C->unk38) > 32.0f);
                         sp2C->unk30 = gd_rand_float() * 180.0f;
                         sp2C->header.drawFlags &= ~OBJ_INVISIBLE;
                         sp2C->flags |= 8;
