@@ -21,6 +21,11 @@
 #ifndef _OS_INTERNAL_H_
 #define	_OS_INTERNAL_H_
 
+
+//should go somewhere else but
+#define ARRLEN(x) ((s32)(sizeof(x) / sizeof(x[0])))
+#define CHNL_ERR(format) (((format).rxsize & CHNL_ERR_MASK) >> 4)
+
 #ifdef _LANGUAGE_C_PLUS_PLUS
 extern "C" {
 #endif
@@ -39,6 +44,7 @@ extern "C" {
 #include "os_internal_thread.h"
 #include "os_internal_debug.h"
 #include "os_internal_host.h"
+#include "os_internal_flash.h"
 
 #endif /* _LANGUAGE_C */
 

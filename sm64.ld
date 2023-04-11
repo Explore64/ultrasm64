@@ -150,13 +150,13 @@ SECTIONS
       BUILD_DIR/src/boot*.o(.text);
       BUILD_DIR/src/hvqm*.o(.text);
       BUILD_DIR/src/audio*.o(.text);
+      */libgcc.a:*.o(.text);
 #if defined(ISVPRINT) || defined(UNF)
       */libultra_d.a:*.o(.text);
 #else
       */libultra_rom.a:*.o(.text);
 #endif
       */libnustd.a:*.o(.text);
-      */libgcc.a:*.o(.text);
       */librtc.a:*.o(.text);
       */libz.a:*.o(.text);
       */libhvqm2.a:*.o(.text);
@@ -185,12 +185,12 @@ SECTIONS
       /* rodata */
       BUILD_DIR/src/boot*.o(.rodata*);
       BUILD_DIR/src/audio*.o(.rodata*);
+      */libgcc.a:*.o(.rodata*);
 #if defined(ISVPRINT) || defined(UNF)
       */libultra_d.a:*.o(.rodata*);
 #else
       */libultra_rom.a:*.o(.rodata*);
 #endif
-      */libgcc.a:*.o(.rodata*);
       */librtc.a:*.o(.rodata*);
       */libz.a:*.o(.rodata*);
 

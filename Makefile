@@ -28,10 +28,10 @@ CONSOLE ?= n64
 $(eval $(call validate-option,CONSOLE,n64 bb))
 
 ifeq      ($(CONSOLE),n64)
-  INCLUDE_DIRS   += include/n64
+  INCLUDE_DIRS   += include/n64 include/n64/PR
   LIBS_DIR       := lib/n64
 else ifeq ($(CONSOLE),bb)
-  INCLUDE_DIRS   += include/ique
+  INCLUDE_DIRS   += include/ique include/ique/PR
   LIBS_DIR       := lib/ique
   DEFINES        += BBPLAYER=1
 endif
@@ -115,7 +115,7 @@ endif
 ifeq ($(COMPILER),gcc)
   NON_MATCHING := 1
   MIPSISET     := -mips3
-  OPT_FLAGS    := -Ofast
+  OPT_FLAGS    := -Ofast -fno-peel-loops --param case-values-threshold=20
 else ifeq ($(COMPILER),clang)
   NON_MATCHING := 1
   # clang doesn't support ABI 'o32' for 'mips3'
@@ -163,11 +163,17 @@ ifeq ($(ISVPRINT),1)
   USE_DEBUG := 1
 endif
 
-ifeq ($(USE_DEBUG),1)
-  ULTRALIB := ultra_d
-  DEFINES += DEBUG=1
+ifeq ($(CONSOLE),bb)
+  ifeq ($(USE_DEBUG),1)
+    ULTRALIB := -lultra_d
+    DEFINES += DEBUG=1
+  else
+    ULTRALIB := -lultra_rom
+    DEFINES += _FINALROM=1 NDEBUG=1
+  endif
 else
-  ULTRALIB := ultra_rom
+  ULTRARULE := $(BUILD_DIR)/libultra_rom.a
+  ULTRALIB := -lultra_rom
   DEFINES += _FINALROM=1 NDEBUG=1
 endif
 
@@ -281,6 +287,7 @@ LEVEL_DIRS     := $(patsubst levels/%,%,$(dir $(wildcard levels/*/header.h)))
 # Directories containing source files
 SRC_DIRS += src src/boot src/game src/engine src/audio src/menu src/buffers actors levels bin data assets asm lib sound
 LIBZ_SRC_DIRS := src/libz
+LIBULTRA_SRC_DIRS := src/libultra src/libultra/audio src/libultra/gt src/libultra/gu src/libultra/io src/libultra/libc src/libultra/mgu src/libultra/os src/libultra/rg src/libultra/sched src/libultra/sp src/libultra/vimodes
 GODDARD_SRC_DIRS := src/goddard src/goddard/dynlists
 BIN_DIRS := bin bin/$(VERSION)
 
@@ -290,8 +297,10 @@ include Makefile.split
 # Source code files
 LEVEL_C_FILES     := $(wildcard levels/*/leveldata.c) $(wildcard levels/*/script.c) $(wildcard levels/*/geo.c)
 C_FILES           := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c)) $(LEVEL_C_FILES)
-LIBZ_C_FILES     := $(foreach dir,$(LIBZ_SRC_DIRS),$(wildcard $(dir)/*.c))
+LIBZ_C_FILES      := $(foreach dir,$(LIBZ_SRC_DIRS),$(wildcard $(dir)/*.c))
 GODDARD_C_FILES   := $(foreach dir,$(GODDARD_SRC_DIRS),$(wildcard $(dir)/*.c))
+LIBULTRA_C_FILES  := $(foreach dir,$(LIBULTRA_SRC_DIRS),$(wildcard $(dir)/*.c))
+LIBULTRA_S_FILES  := $(foreach dir,$(LIBULTRA_SRC_DIRS),$(wildcard $(dir)/*.s))
 S_FILES           := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.s))
 GENERATED_C_FILES := $(BUILD_DIR)/assets/mario_anim_data.c $(BUILD_DIR)/assets/demo_data.c
 
@@ -317,9 +326,11 @@ O_FILES := $(foreach file,$(C_FILES),$(BUILD_DIR)/$(file:.c=.o)) \
 
 LIBZ_O_FILES := $(foreach file,$(LIBZ_C_FILES),$(BUILD_DIR)/$(file:.c=.o))
 GODDARD_O_FILES := $(foreach file,$(GODDARD_C_FILES),$(BUILD_DIR)/$(file:.c=.o))
+LIBULTRA_O_FILES := $(foreach file,$(LIBULTRA_C_FILES),$(BUILD_DIR)/$(file:.c=.o)) \
+ $(foreach file,$(LIBULTRA_S_FILES),$(BUILD_DIR)/$(file:.s=.o))
 
 # Automatic dependency files
-DEP_FILES := $(O_FILES:.o=.d) $(LIBZ_O_FILES:.o=.d) $(GODDARD_O_FILES:.o=.d) $(BUILD_DIR)/$(LD_SCRIPT).d
+DEP_FILES := $(O_FILES:.o=.d) $(LIBZ_O_FILES:.o=.d) $(GODDARD_O_FILES:.o=.d) $(LIBULTRA_O_FILES:.o=.d) $(BUILD_DIR)/$(LD_SCRIPT).d
 
 #==============================================================================#
 # Compiler Options                                                             #
@@ -368,11 +379,11 @@ OBJDUMP   := $(CROSS)objdump
 OBJCOPY   := $(CROSS)objcopy
 
 ifeq ($(TARGET_N64),1)
-  TARGET_CFLAGS := -nostdinc -DTARGET_N64 -D_LANGUAGE_C
+  TARGET_CFLAGS := -nostdinc -DTARGET_N64
   CC_CFLAGS := -fno-builtin
 endif
 
-INCLUDE_DIRS += include $(BUILD_DIR) $(BUILD_DIR)/include src . include/hvqm
+INCLUDE_DIRS += include $(BUILD_DIR) $(BUILD_DIR)/include src . include/hvqm include/sys
 ifeq ($(TARGET_N64),1)
   INCLUDE_DIRS += include/libc
 endif
@@ -391,7 +402,7 @@ else
 endif
 ASMFLAGS = -G 0 $(OPT_FLAGS) $(TARGET_CFLAGS) -mips3 $(DEF_INC_CFLAGS) -mno-shared -march=vr4300 -mfix4300 -mabi=32 -mhard-float -mdivide-breaks -fno-stack-protector -fno-common -fno-zero-initialized-in-bss -fno-PIC -mno-abicalls -fno-strict-aliasing -fno-inline-functions -ffreestanding -fwrapv -Wall -Wextra
 
-ASFLAGS     := -march=vr4300 -mabi=32 $(foreach i,$(INCLUDE_DIRS),-I$(i)) $(foreach d,$(DEFINES),--defsym $(d))
+ASFLAGS     := -march=vr4300 -mabi=32 $(foreach i,$(INCLUDE_DIRS),-I$(i)) $(foreach d,$(DEFINES),--defsym $(d)) -DMIPSEB -D_LANGUAGE_ASSEMBLY -D_ULTRA64 -x assembler-with-cpp
 RSPASMFLAGS := $(foreach d,$(DEFINES),-definelabel $(subst =, ,$(d)))
 
 # C preprocessor flags
@@ -496,7 +507,53 @@ endif
 $(CRASH_TEXTURE_C_FILES): TEXTURE_ENCODING := u32
 
 ifeq ($(COMPILER),gcc)
-$(BUILD_DIR)/src/libz/%.o: OPT_FLAGS := -Os
+  $(BUILD_DIR)/src/libz/%.o: OPT_FLAGS := -Os
+  $(BUILD_DIR)/src/libultra/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/audio/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/gt/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/gu/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/io/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/libc/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/mgu/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/os/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/rg/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/sched/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/sp/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+  $(BUILD_DIR)/src/libultra/vimodes/%.o: OPT_FLAGS := -Ofast -ffast-math -fno-unsafe-math-optimizations -G 0
+
+  $(BUILD_DIR)/src/libultra/os/assert.marker: OPTFLAGS := -O0
+  $(BUILD_DIR)/src/libultra/os/ackramromread.marker: OPTFLAGS := -O0
+  $(BUILD_DIR)/src/libultra/os/ackramromwrite.marker: OPTFLAGS := -O0
+  $(BUILD_DIR)/src/libultra/os/exit.marker: OPTFLAGS := -O0
+  $(BUILD_DIR)/src/libultra/os/seterrorhandler.marker: OPTFLAGS := -O0
+  $(BUILD_DIR)/src/libultra/gu/us2dex_emu.marker: GBIDEFINE :=
+  $(BUILD_DIR)/src/libultra/gu/us2dex2_emu.marker: GBIDEFINE :=
+  $(BUILD_DIR)/src/libultra/mgu/%.marker: export VR4300MUL := OFF
+  $(BUILD_DIR)/src/libultra/mgu/rotate.marker: export VR4300MUL := ON
+  $(BUILD_DIR)/src/libultra/os/%.marker: ASFLAGS += -P
+  $(BUILD_DIR)/src/libultra/gu/%.marker: ASFLAGS += -P
+  $(BUILD_DIR)/src/libultra/libc/%.marker: ASFLAGS += -P
+
+  $(BUILD_DIR)/src/game/rendering_graph_node.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/engine/math_util.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/engine/collision_load.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/engine/surface_collision.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/engine/surface_load.o: OPT_FLAGS := -Os -ffast-math
+
+  $(BUILD_DIR)/src/goddard/debug_utils.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/draw_objects.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/dynlist_proc.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/gd_main.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/gd_math.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/gd_memory.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/joints.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/objects.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/particles.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/renderer.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/sfx.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/shape_helper.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/skin.o: OPT_FLAGS := -Os -ffast-math
+  $(BUILD_DIR)/src/goddard/skin_movement.o: OPT_FLAGS := -Os -ffast-math
 endif
 
 ifeq ($(VERSION),eu)
@@ -527,28 +584,7 @@ $(BUILD_DIR)/src/usb/usb.o: CFLAGS += -Wno-unused-variable -Wno-sign-compare -Wn
 $(BUILD_DIR)/src/usb/debug.o: OPT_FLAGS := -O0
 $(BUILD_DIR)/src/usb/debug.o: CFLAGS += -Wno-unused-parameter -Wno-maybe-uninitialized
 
-$(BUILD_DIR)/src/game/rendering_graph_node.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/engine/math_util.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/engine/collision_load.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/engine/surface_collision.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/engine/surface_load.o: OPT_FLAGS := -Os -ffast-math
-
-$(BUILD_DIR)/src/goddard/debug_utils.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/draw_objects.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/dynlist_proc.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/gd_main.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/gd_math.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/gd_memory.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/joints.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/objects.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/particles.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/renderer.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/sfx.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/shape_helper.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/skin.o: OPT_FLAGS := -Os -ffast-math
-$(BUILD_DIR)/src/goddard/skin_movement.o: OPT_FLAGS := -Os -ffast-math
-
-ALL_DIRS := $(BUILD_DIR) $(addprefix $(BUILD_DIR)/,$(SRC_DIRS) $(GODDARD_SRC_DIRS) $(LIBZ_SRC_DIRS) $(ULTRA_BIN_DIRS) $(BIN_DIRS) $(TEXTURE_DIRS) $(TEXT_DIRS) $(SOUND_SAMPLE_DIRS) $(addprefix levels/,$(LEVEL_DIRS)) rsp include) $(YAY0_DIR) $(addprefix $(YAY0_DIR)/,$(VERSION)) $(SOUND_BIN_DIR) $(SOUND_BIN_DIR)/sequences/$(VERSION)
+ALL_DIRS := $(BUILD_DIR) $(addprefix $(BUILD_DIR)/,$(SRC_DIRS) $(LIBULTRA_SRC_DIRS) $(GODDARD_SRC_DIRS) $(LIBZ_SRC_DIRS) $(BIN_DIRS) $(TEXTURE_DIRS) $(TEXT_DIRS) $(SOUND_SAMPLE_DIRS) $(addprefix levels/,$(LEVEL_DIRS)) rsp include) $(YAY0_DIR) $(addprefix $(YAY0_DIR)/,$(VERSION)) $(SOUND_BIN_DIR) $(SOUND_BIN_DIR)/sequences/$(VERSION)
 
 # Make sure build directory exists before compiling anything
 DUMMY != mkdir -p $(ALL_DIRS)
@@ -717,6 +753,11 @@ $(BUILD_DIR)/src/game/version_data.h: tools/make_version.sh
 # Compilation Recipes                                                          #
 #==============================================================================#
 
+# Assemble assembly code
+$(BUILD_DIR)/%.o: %.s
+	$(call print,Assembling:,$<,$@)
+	$(V)$(CROSS)gcc -c $(ASMFLAGS) $(foreach i,$(INCLUDE_DIRS),-Wa,-I$(i)) -x assembler-with-cpp -MMD -MF $(BUILD_DIR)/$*.d  -o $@ $<
+
 # Compile C code
 $(BUILD_DIR)/%.o: %.c
 	$(call print,Compiling:,$<,$@)
@@ -724,11 +765,6 @@ $(BUILD_DIR)/%.o: %.c
 $(BUILD_DIR)/%.o: $(BUILD_DIR)/%.c
 	$(call print,Compiling:,$<,$@)
 	$(V)$(CC) -c $(CFLAGS) -MMD -MF $(BUILD_DIR)/$*.d  -o $@ $<
-
-# Assemble assembly code
-$(BUILD_DIR)/%.o: %.s
-	$(call print,Assembling:,$<,$@)
-	$(V)$(CROSS)gcc -c $(ASMFLAGS) $(foreach i,$(INCLUDE_DIRS),-Wa,-I$(i)) -x assembler-with-cpp -MMD -MF $(BUILD_DIR)/$*.d  -o $@ $<
 
 # Assemble RSP assembly code
 $(BUILD_DIR)/rsp/%.bin $(BUILD_DIR)/rsp/%_data.bin: rsp/%.s
@@ -745,15 +781,20 @@ $(BUILD_DIR)/libgoddard.a: $(GODDARD_O_FILES)
 	@$(PRINT) "$(GREEN)Linking libgoddard:  $(BLUE)$@ $(NO_COL)\n"
 	$(V)$(AR) rcs -o $@ $(GODDARD_O_FILES)
 
+# Link Libultra
+$(BUILD_DIR)/libultra_rom.a: $(LIBULTRA_O_FILES)
+	@$(PRINT) "$(GREEN)Linking libultra:  $(BLUE)$@ $(NO_COL)\n"
+	$(V)$(AR) rcs -o $@ $(LIBULTRA_O_FILES)
+
 # Link libz
 $(BUILD_DIR)/libz.a: $(LIBZ_O_FILES)
 	@$(PRINT) "$(GREEN)Linking libz:  $(BLUE)$@ $(NO_COL)\n"
 	$(V)$(AR) rcs -o $@ $(LIBZ_O_FILES)
 
 # Link SM64 ELF file
-$(ELF): $(O_FILES) $(YAY0_OBJ_FILES) $(SEG_FILES) $(BUILD_DIR)/$(LD_SCRIPT) undefined_syms.txt $(LIBZRULE) $(GODDARDRULE)
+$(ELF): $(O_FILES) $(YAY0_OBJ_FILES) $(SEG_FILES) $(BUILD_DIR)/$(LD_SCRIPT) undefined_syms.txt $(LIBZRULE) $(GODDARDRULE) $(ULTRARULE)
 	@$(PRINT) "$(GREEN)Linking ELF file:  $(BLUE)$@ $(NO_COL)\n"
-	$(V)$(LD) --gc-sections -L $(BUILD_DIR) -T undefined_syms.txt -T $(BUILD_DIR)/$(LD_SCRIPT) -Map $(BUILD_DIR)/sm64.$(VERSION).map --no-check-sections $(addprefix -R ,$(SEG_FILES)) -o $@ $(O_FILES) -L$(LIBS_DIR) -l$(ULTRALIB) -Llib -Llib/gcclib/$(LIBGCCDIR) -lgcc -lrtc -lnustd -lhvqm2 $(LIBZLINK) $(GODDARDLINK) -u sprintf -u osMapTLB
+	$(V)$(LD) --gc-sections -L $(BUILD_DIR) -T undefined_syms.txt -T $(BUILD_DIR)/$(LD_SCRIPT) -Map $(BUILD_DIR)/sm64.$(VERSION).map --no-check-sections $(addprefix -R ,$(SEG_FILES)) -o $@ $(O_FILES) -L$(LIBS_DIR) $(ULTRALIB) -Llib -Llib/gcclib/$(LIBGCCDIR) -lgcc $(LIBZLINK) $(GODDARDLINK) -u sprintf -u osMapTLB
 
 # Build ROM
 $(ROM): $(ELF)

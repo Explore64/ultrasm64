@@ -1,5 +1,4 @@
-#ifndef _ABI_H_
-#define _ABI_H_
+#pragma once
 
 /**************************************************************************
  *                                                                        *
@@ -92,7 +91,7 @@
 /*
  * BEGIN C-specific section: (typedef's)
  */
-#if defined(_LANGUAGE_C) || defined(_LANGUAGE_C_PLUS_PLUS)
+//#if defined(_LANGUAGE_C) || defined(_LANGUAGE_C_PLUS_PLUS)
 
 /*
  * Data Structures.
@@ -265,7 +264,9 @@ typedef union {
 /*
  * ADPCM State
  */
-typedef short ADPCM_STATE[16];
+#define ADPCMVSIZE	8
+#define ADPCMFSIZE      16
+typedef short ADPCM_STATE[ADPCMFSIZE];
 
 /*
  * Pole filter state
@@ -991,6 +992,4 @@ typedef short ENVMIX_STATE[40];
 
 #endif
 
-#endif /* _LANGUAGE_C */
-
-#endif /* !_ABI_H_ */
+//#endif /* _LANGUAGE_C */

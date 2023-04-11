@@ -38,7 +38,7 @@ extern "C" {
 #include "os_message.h"
 
 
-#if defined(_LANGUAGE_C) || defined(_LANGUAGE_C_PLUS_PLUS)
+#ifndef _LANGUAGE_ASSEMBLY
 
 /**************************************************************************
  *
