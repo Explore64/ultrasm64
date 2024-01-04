@@ -81,15 +81,18 @@ def convert_tris(image_path, vert_buffer_size):
                                 curIndices.append(triIndices[1])
                                 curIndices.append(triIndices[2])
                                 minVert = min(triIndices[0], triIndices[1], triIndices[2], minVert)
-                                #if (minVert - vertsIn < 0):
-                                #    vertOffset = minVert - vertsIn
+                                if (minVert - vertsIn < 0):
+                                    vertOffset = minVert - vertsIn
                                 del triIndices[:3]
                             else:
                                 #print(minVert - vertsIn)
                                 maxVert = min(vert_buffer_size, vertCount - vertsIn)
+                                vertsIn += vertOffset
                                 newLine += "    gsSPVertex(" + str(vertAddr) + " + " + str(vertsIn) + ", " + str(maxVert) + ", 0),\n"
                                 vertsIn += maxVert
-                                vertsIn += vertOffset
+                                vertOffset = 0
+                                #print("Loaded " + str(maxVert) + " vertices.")
+                                #print("Tris to draw: " + str(int(len(curIndices) / 3)))
                                 minVert = 999
                                 break
                     else:
@@ -100,6 +103,8 @@ def convert_tris(image_path, vert_buffer_size):
                         else:
                             newLine += "    gsSP1Triangle(" + str(curIndices[0] - offset) + ", " + str(curIndices[1] - offset) + ", " + str(curIndices[2] - offset) + ", 0x0),\n"
                             del curIndices[:3]
+                    #print("Current Tris remaining: " + str(int(len(curIndices) / 3)))
+                    #print("Total Tris remaining: " + str(int(len(triIndices) / 3)))
 
                 #print(newLine)
                 while (len(linesToDestroy) > 0):
@@ -158,11 +163,12 @@ def convert_tris(image_path, vert_buffer_size):
         newFile = open(image_path, mode = 'w')
         newFile.writelines(lines)
         newFile.close()
-    print("Processed " + image_path + ".")
+        print("Processed " + image_path + ".")
 
 def job(vert_buffer_size):
-    folder_path = "./levels/ssl/areas/2/1"
-    folder_whitelist = ["./actors", "./levels", "./bin"]
+    #folder_path = "./levels/wmotr/areas/1"
+    folder_path = "./actors/mario"
+    folder_whitelist = ["./"]
     folder_blacklist = ["anims", "geo", "script", "collision", "texture"]
     for root, dirs, files in os.walk(folder_path):
         if any(folder in root for folder in folder_whitelist):
