@@ -6,7 +6,7 @@ import getopt
 
 def convert_tris(image_path, vert_buffer_size):
     file = open(image_path, mode = 'r')
-    print("Opening " + image_path + ".")
+    #print("Opening " + image_path + ".")
     lines = file.readlines()
     file.close()
     triIndices = []
@@ -85,7 +85,7 @@ def convert_tris(image_path, vert_buffer_size):
                                     vertOffset = minVert - vertsIn
                                 del triIndices[:3]
                             else:
-                                #print(minVert - vertsIn)
+                                print(minVert - vertsIn)
                                 maxVert = min(vert_buffer_size, vertCount - vertsIn)
                                 vertsIn += vertOffset
                                 newLine += "    gsSPVertex(" + str(vertAddr) + " + " + str(vertsIn) + ", " + str(maxVert) + ", 0),\n"
@@ -148,7 +148,6 @@ def convert_tris(image_path, vert_buffer_size):
                     lines.insert(baseLine, newVertLine)
                     #print(newVertLine)
                     addrMerge.clear()
-                    numLines = len(vertBufferLinesToDestroy)
                     while (len(vertBufferLinesToDestroy) > 0):
                         lines[vertBufferLinesToDestroy[0]] = ""
                         del vertBufferLinesToDestroy[:1]

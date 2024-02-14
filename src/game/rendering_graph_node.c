@@ -90,8 +90,6 @@ RenderList *gMateriallistHead[7];
 RenderList *gMateriallistTail[7];
 u8 sShowAll = FALSE;
 
-struct AllocOnlyPool *gDisplayListHeap;
-
 struct RenderModeContainer {
     u32 modes[7];
 };
@@ -256,14 +254,6 @@ void geo_process_master_list_sub(void) {
 
 #define ALIGN8(val) (((val) + 0x7) & ~0x7)
 
-static void *alloc_only_pool_allocGRAPH(struct AllocOnlyPool *pool, s32 size) { // refreshes once per frame
-    void *addr;
-    addr = pool->freePtr;
-    pool->freePtr += size;
-    pool->usedSpace += size;
-    return addr;
-}
-
 static void *alloc_display_listGRAPH(u32 size) {
     gGfxPoolEnd -= size;
     return gGfxPoolEnd;
@@ -273,7 +263,7 @@ void find_material_list(RenderNode *node, s32 layer) {
     RenderList *matList;
     if (gRenderNodeHead[layer] == NULL) {
         gRenderNodeHead[layer] = node;
-        matList = alloc_only_pool_allocGRAPH(gDisplayListHeap, sizeof(RenderList));
+        matList = alloc_display_listGRAPH(sizeof(RenderList));
         gMateriallistHead[layer] = matList;
     } else {
         if (node->material) {
@@ -293,7 +283,7 @@ void find_material_list(RenderNode *node, s32 layer) {
                 list = list->next;
             }
         }
-        matList = alloc_only_pool_allocGRAPH(gDisplayListHeap, sizeof(RenderList));
+        matList = alloc_display_listGRAPH(sizeof(RenderList));
         gMateriallistTail[layer]->next = matList;
         gRenderNodeTail[layer]->next = node;
     }
@@ -313,7 +303,7 @@ void find_material_list(RenderNode *node, s32 layer) {
 void geo_append_display_list(void *displayList, s16 layer, void *material) {
 
     if (gCurGraphNodeMasterList != 0) {
-        RenderNode *entry = alloc_only_pool_allocGRAPH(gDisplayListHeap, sizeof(RenderNode));
+        RenderNode *entry = alloc_display_listGRAPH(sizeof(RenderNode));
         entry->mtx = gMatStackFixed[gMatStackIndex];
         if (gCurGraphNodeObject != NULL && gAntiAliasing == 0 && ((struct Object *) gCurGraphNodeObject)->behavior != segmented_to_virtual(bhvStaticObject)) {
             entry->aaMode = TRUE;
@@ -535,15 +525,16 @@ void geo_process_camera(struct GraphNodeCamera *node) {
     Mtx *rollMtx = alloc_display_list(sizeof(*rollMtx));
     Mtx *mtx = alloc_display_list(sizeof(*mtx));
     Mtx *viewMtx = alloc_display_list(sizeof(Mtx));
+    Gfx *gfx = gDisplayListHead;
 
     if (node->fnNode.func != NULL) {
         node->fnNode.func(GEO_CONTEXT_RENDER, &node->fnNode.node, gMatStack[gMatStackIndex]);
     }
 
-    gSPLookAt(gDisplayListHead++, &gCurLookAt);
+    gSPLookAt(gfx++, &gCurLookAt);
     mtxf_rotate_xy(rollMtx, node->rollScreen);
 
-    gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(rollMtx), G_MTX_PROJECTION | G_MTX_MUL | G_MTX_NOPUSH);
+    gSPMatrix(gfx++, VIRTUAL_TO_PHYSICAL(rollMtx), G_MTX_PROJECTION | G_MTX_MUL | G_MTX_NOPUSH);
 
     mtxf_lookat(gCameraTransform, node->posLerp, node->focusLerp, node->roll);
     Mat4* cameraMatrix = &gCameraTransform;
@@ -555,8 +546,9 @@ void geo_process_camera(struct GraphNodeCamera *node) {
     gCurLookAt->l[1].l.dir[2] = (s8)(127.0f * (*cameraMatrix)[2][1]);
     // Convert the scaled matrix to fixed-point and integrate it into the projection matrix stack
     guMtxF2L(gCameraTransform, viewMtx);
-    gSPMatrix(gDisplayListHead++, VIRTUAL_TO_PHYSICAL(viewMtx), G_MTX_PROJECTION | G_MTX_MUL | G_MTX_NOPUSH);
+    gSPMatrix(gfx++, VIRTUAL_TO_PHYSICAL(viewMtx), G_MTX_PROJECTION | G_MTX_MUL | G_MTX_NOPUSH);
     setup_global_light();
+    gDisplayListHead = gfx;
     if (node->fnNode.node.children != NULL) {
         gCurGraphNodeCamera = node;
         billboardMatrix[0][0] = coss(0);
@@ -1397,7 +1389,6 @@ void geo_process_root(struct GraphNodeRoot *node, Vp *b, Vp *c, s32 clearColor) 
 
         //print_text_fmt_int(32,64, "%d", sMaterialSwaps);
         sMaterialSwaps = 0;
-        gDisplayListHeap = alloc_only_pool_init(main_pool_available() - sizeof(struct AllocOnlyPool), MEMORY_POOL_LEFT);
         initialMatrix = alloc_display_listGRAPH(sizeof(*initialMatrix));
         gCurLookAt = (LookAt*) alloc_display_list(sizeof(LookAt));
         bzero(gCurLookAt, sizeof(LookAt));
@@ -1425,6 +1416,5 @@ void geo_process_root(struct GraphNodeRoot *node, Vp *b, Vp *c, s32 clearColor) 
             geo_process_node_and_siblings(node->node.children);
         }
         gCurGraphNodeRoot = NULL;
-        main_pool_free(gDisplayListHeap);
     }
 }

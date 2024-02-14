@@ -280,6 +280,12 @@
 .endm
 
 .macro chan_stereoheadseteffects a
+#ifdef ENABLE_STEREO_HEADSET_EFFECTS
+    .byte 0xd0
+    .byte \a
+#else
+    // Feel free to hijack this command for something else if it's not being used!
+#endif
 .endm
 
 .macro chan_setnoteallocationpolicy a
@@ -446,15 +452,6 @@
     writeseq\@:
 .endm
 
-.macro layer_portamento a, b, c
-    .byte 0xc7, \a, \b
-    .if ((\a & 0x80) == 0)
-        var \c
-    .else
-        .byte \c
-    .endif
-.endm
-
 .macro chan_delay_long a
     .byte 0xfd
     var_long \a
@@ -476,8 +473,8 @@
     .byte \a
 .endm
 
-.macro chan_testlayerfinished a
-    .byte 0x80 + \a
+.macro chan_testlayersfinished
+    .byte 0x80
 .endm
 
 .macro chan_setlayer a, b
@@ -489,14 +486,14 @@
     .byte 0x60 + \a
 .endm
 
-.macro chan_freelayer a
-    .byte 0x90 + \a
+.macro chan_freelayers
+    .byte 0x90
 .endm
 
 #else
 
-.macro chan_testlayerfinished a
-    .byte 0x0 + \a
+.macro chan_testlayersfinished
+    .byte 0x00
 .endm
 
 .macro chan_ioreadval a
@@ -508,8 +505,8 @@
     .byte (\b - sequence_start) >> 8, (\b - sequence_start) & 0xff
 .endm
 
-.macro chan_freelayer a
-    .byte 0xa0 + \a
+.macro chan_freelayers
+    .byte 0xa0
 .endm
 
 #ifdef VERSION_EU
@@ -562,6 +559,14 @@
     .byte \c
 .endm
 
+.macro layer_note1_mario a, b, c
+#ifndef DISABLE_MARIO_PITCH_SHIFTING
+    layer_note1 \a, \b, \c
+#else
+    layer_note1 39, \b, \c
+#endif
+.endm
+
 .macro layer_note2 a, b, c
     .byte 0x80 + \a
     .byte \b
@@ -583,6 +588,12 @@
     .byte \a
 .endm
 
+.macro layer_transpose_mario a
+#ifndef DISABLE_MARIO_PITCH_SHIFTING
+    layer_transpose \a
+#endif
+.endm
+
 .macro layer_setshortnotedefaultplaypercentage a
     .byte 0xc3
     var \a
@@ -599,6 +610,21 @@
 .macro layer_setinstr a
     .byte 0xc6
     .byte \a
+.endm
+
+.macro layer_portamento a, b, c
+    .byte 0xc7, \a, \b
+    .if ((\a & 0x80) == 0)
+        var \c
+    .else
+        .byte \c
+    .endif
+.endm
+
+.macro layer_portamento_mario a, b, c
+#ifndef DISABLE_MARIO_PITCH_SHIFTING
+    layer_portamento \a, \b, \c
+#endif
 .endm
 
 .macro layer_disableportamento
@@ -660,7 +686,7 @@
 // envelope commands
 
 .macro envelope_disable a
-    .byte 0x0, 0x0
+    .byte 0xff, 0xfc
     .byte \a >> 8, \a & 0xff
 .endm
 

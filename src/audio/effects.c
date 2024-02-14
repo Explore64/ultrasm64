@@ -57,22 +57,25 @@ void sequence_channel_process_sound(struct SequenceChannel *seqChannel, s32 reca
 }
 #else
 static void sequence_channel_process_sound(struct SequenceChannel *seqChannel) {
+    s32 hasProcessedChannel = FALSE;
     f32 channelVolume;
-    f32 panLayerWeight;
     f32 panFromChannel;
-    s32 i;
+    f32 panLayerWeight;
 
-    channelVolume = seqChannel->volume * seqChannel->volumeScale * seqChannel->seqPlayer->fadeVolume;
-    if (seqChannel->seqPlayer->muted && (seqChannel->muteBehavior & MUTE_BEHAVIOR_SOFTEN) != 0) {
-        channelVolume *= seqChannel->seqPlayer->muteVolumeScale;
-    }
-
-    panFromChannel = seqChannel->pan * seqChannel->panChannelWeight;
-    panLayerWeight = US_FLOAT(1.0) - seqChannel->panChannelWeight;
-
-    for (i = 0; i < 4; i++) {
+    for (s32 i = 0; i < LAYERS_MAX; i++) {
         struct SequenceChannelLayer *layer = seqChannel->layers[i];
         if (layer != NULL && layer->enabled && layer->note != NULL) {
+            if (!hasProcessedChannel) {
+                hasProcessedChannel = TRUE;
+
+                channelVolume = seqChannel->volume * seqChannel->volumeScale * seqChannel->seqPlayer->fadeVolume;
+                if (seqChannel->seqPlayer->muted && (seqChannel->muteBehavior & MUTE_BEHAVIOR_SOFTEN) != 0) {
+                    channelVolume *= seqChannel->seqPlayer->muteVolumeScale;
+                }
+
+                panFromChannel = seqChannel->pan * seqChannel->panChannelWeight;
+                panLayerWeight = 1.0f - seqChannel->panChannelWeight;
+            }
             layer->noteFreqScale = layer->freqScale * seqChannel->freqScale;
             layer->noteVelocity = layer->velocitySquare * channelVolume;
             layer->notePan = (layer->pan * panLayerWeight) + panFromChannel;
@@ -156,20 +159,11 @@ f32 get_portamento_freq_scale(struct Portamento *p) {
     p->cur += p->speed;
     v0 = (u32) p->cur;
 
-#if defined(VERSION_EU) || defined(VERSION_SH)
-    if (v0 > 127)
-#else
-    if (v0 >= 127)
-#endif
-    {
+    if (v0 > 127) {
         v0 = 127;
     }
 
-#if defined(VERSION_EU) || defined(VERSION_SH)
     result = US_FLOAT(1.0) + p->extent * (gPitchBendFrequencyScale[v0 + 128] - US_FLOAT(1.0));
-#else
-    result = US_FLOAT(1.0) + p->extent * (gPitchBendFrequencyScale[v0 + 127] - US_FLOAT(1.0));
-#endif
     return result;
 }
 
@@ -263,11 +257,7 @@ f32 get_vibrato_freq_scale(struct VibratoState *vib) {
     pitchChange = get_vibrato_pitch_change(vib);
     extent = (f32) vib->extent / US_FLOAT(4096.0);
 
-#if defined(VERSION_EU) || defined(VERSION_SH)
     result = US_FLOAT(1.0) + extent * (gPitchBendFrequencyScale[pitchChange + 128] - US_FLOAT(1.0));
-#else
-    result = US_FLOAT(1.0) + extent * (gPitchBendFrequencyScale[pitchChange + 127] - US_FLOAT(1.0));
-#endif
     return result;
 }
 
