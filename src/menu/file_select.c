@@ -2782,8 +2782,8 @@ void print_score_file_star_score(s8 fileIndex, s16 courseIndex, s16 x, s16 y) {
 #endif
     #define LEVEL_NAME_X 23
     #define STAR_SCORE_X (gScreenWidth / 2) - 8
-    #define MYSCORE_X (gScreenWidth / 2) + 77
-    #define HISCORE_X (gScreenWidth / 2) + 77
+    #define MYSCORE_X (gScreenWidth) + 77
+    #define HISCORE_X (gScreenWidth) + 77
 #else
     #define MARIO_X (gScreenWidth / 2) - 135
     #define FILE_LETTER_X (gScreenWidth / 2) - 65
@@ -2792,11 +2792,11 @@ void print_score_file_star_score(s8 fileIndex, s16 courseIndex, s16 x, s16 y) {
     #define LEVEL_NAME_X (gScreenWidth / 2) - 137
     #define STAR_SCORE_X (gScreenWidth / 2) + 11
 #ifdef VERSION_EU
-    #define MYSCORE_X get_str_x_pos_from_center((gScreenWidth / 2) + 97, textMyScore[sLanguageMode], 10.0f)
-    #define HISCORE_X get_str_x_pos_from_center((gScreenWidth / 2) + 97, textHiScore[sLanguageMode], 10.0f)
+    #define MYSCORE_X get_str_x_pos_from_center((gScreenWidth) + 97, textMyScore[sLanguageMode], 10.0f)
+    #define HISCORE_X get_str_x_pos_from_center((gScreenWidth) + 97, textHiScore[sLanguageMode], 10.0f)
 #else
-    #define MYSCORE_X (gScreenWidth / 2) - 78
-    #define HISCORE_X (gScreenWidth / 2) - 71
+    #define MYSCORE_X (gScreenWidth) - 78
+    #define HISCORE_X (gScreenWidth) - 71
 #endif
 #endif
 
@@ -2860,21 +2860,9 @@ void print_save_file_scores(s8 fileIndex) {
     print_score_file_course_coin_score(fileIndex, courseIndex - 1, (gScreenWidth / 2) + 53, 23 + 12 * courseIndex);
 
     // Course values are indexed, from Bob-omb Battlefield to Rainbow Ride
-    PRINT_COURSE_SCORES(COURSE_BOB, 1)
-    PRINT_COURSE_SCORES(COURSE_WF,  1)
-    PRINT_COURSE_SCORES(COURSE_JRB, 1)
-    PRINT_COURSE_SCORES(COURSE_CCM, 1)
-    PRINT_COURSE_SCORES(COURSE_BBH, 1)
-    PRINT_COURSE_SCORES(COURSE_HMC, 1)
-    PRINT_COURSE_SCORES(COURSE_LLL, 1)
-    PRINT_COURSE_SCORES(COURSE_SSL, 1)
-    PRINT_COURSE_SCORES(COURSE_DDD, 1)
-    PRINT_COURSE_SCORES(COURSE_SL,  0)
-    PRINT_COURSE_SCORES(COURSE_WDW, 0)
-    PRINT_COURSE_SCORES(COURSE_TTM, 0)
-    PRINT_COURSE_SCORES(COURSE_THI, 0)
-    PRINT_COURSE_SCORES(COURSE_TTC, 0)
-    PRINT_COURSE_SCORES(COURSE_RR,  0)
+    for (int i = 1; i <= COURSE_RR; i++) {
+        PRINT_COURSE_SCORES(i, 1)
+    }
 #undef PRINT_COURSE_SCORES
 
     // Print castle secret stars text
